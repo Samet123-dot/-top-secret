@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Kayıt Ol</title>
+  <title>Giriş / Kayıt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -17,7 +17,7 @@
       margin: 0;
       padding: 0;
     }
-    .register-card {
+    .auth-card {
       background: #232136;
       border-radius: 22px;
       box-shadow: 0 8px 32px #7c3aed33, 0 1.5px 0 #23272b;
@@ -32,7 +32,7 @@
       0% { opacity: 0; transform: translateY(-60px) scale(0.98); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .register-title {
+    .auth-title {
       font-size: 2rem;
       font-weight: bold;
       color: #ff9800;
@@ -41,12 +41,12 @@
       letter-spacing: 1px;
       text-shadow: 0 2px 8px #7c3aed33;
     }
-    .register-form {
+    .auth-form {
       display: flex;
       flex-direction: column;
       gap: 1.1em;
     }
-    .register-form input {
+    .auth-form input {
       background: #181a1b;
       color: #f5f5f7;
       border: 1.5px solid #7c3aed;
@@ -56,12 +56,12 @@
       transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
       outline: none;
     }
-    .register-form input:focus {
+    .auth-form input:focus {
       box-shadow: 0 0 0 3px #ff9800cc, 0 2px 8px #7c3aed44;
       border-color: #ff9800;
       background: #232136;
     }
-    .register-btn {
+    .auth-btn {
       background: linear-gradient(90deg, #7c3aed 0%, #ff9800 100%);
       border: none;
       color: #fff;
@@ -74,55 +74,126 @@
       cursor: pointer;
       transition: transform 0.18s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.18s;
     }
-    .register-btn:hover, .register-btn:focus {
+    .auth-btn:hover, .auth-btn:focus {
       background: linear-gradient(90deg, #ff9800 0%, #7c3aed 100%);
       color: #fff;
       transform: scale(1.06) translateY(-2px) rotate(-1deg);
       box-shadow: 0 6px 24px #ff980044;
     }
-    .register-error {
+    .auth-switch {
+      background: none;
+      border: none;
+      color: #7c3aed;
+      font-weight: bold;
+      margin-top: 0.5em;
+      cursor: pointer;
+      text-align: center;
+      font-size: 1rem;
+      text-decoration: underline;
+      transition: color 0.2s;
+    }
+    .auth-switch:hover { color: #ff9800; }
+    .auth-error {
       color: #ff6b6b;
       font-size: 1.04rem;
       margin-top: 0.5rem;
       text-align: center;
       min-height: 1.2em;
     }
+    .auth-success {
+      color: #43ea7b;
+      font-size: 1.04rem;
+      margin-top: 0.5rem;
+      text-align: center;
+      min-height: 1.2em;
+    }
     @media (max-width: 600px) {
-      .register-card {
+      .auth-card {
         max-width: 98vw;
         padding: 1.2rem 0.5rem 1.2rem 0.5rem;
         border-radius: 18px;
       }
-      .register-title { font-size: 1.4rem; }
+      .auth-title { font-size: 1.4rem; }
     }
   </style>
 </head>
 <body>
-  <div class="register-card">
-    <div class="register-title">Kayıt Ol</div>
-    <form class="register-form" id="register-form" autocomplete="off">
-      <input type="email" id="register-email" placeholder="E-posta" required />
-      <input type="password" id="register-password" placeholder="Şifre" required minlength="6" />
-      <button type="submit" class="register-btn">Kayıt Ol</button>
-      <div class="register-error" id="register-error"></div>
+  <div class="auth-card">
+    <div class="auth-title" id="form-title">Giriş Yap</div>
+    <form class="auth-form" id="login-form" autocomplete="off">
+      <input type="email" id="login-email" placeholder="E-posta" required />
+      <input type="password" id="login-password" placeholder="Şifre" required minlength="6" />
+      <button type="submit" class="auth-btn">Giriş Yap</button>
+      <div class="auth-error" id="login-error"></div>
+      <button type="button" class="auth-switch" id="show-signup">Hesabın yok mu? Kayıt Ol</button>
+    </form>
+    <form class="auth-form" id="signup-form" autocomplete="off" style="display:none;">
+      <input type="email" id="signup-email" placeholder="E-posta" required />
+      <input type="password" id="signup-password" placeholder="Şifre" required minlength="6" />
+      <button type="submit" class="auth-btn">Kayıt Ol</button>
+      <div class="auth-error" id="signup-error"></div>
+      <div class="auth-success" id="signup-success"></div>
+      <button type="button" class="auth-switch" id="show-login">Zaten hesabın var mı? Giriş Yap</button>
     </form>
   </div>
   <script>
-    // Demo: Form submitte hata göster (backend yoksa)
-    document.getElementById('register-form').addEventListener('submit', function(e) {
+    // Formlar arası geçiş
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const showSignupBtn = document.getElementById('show-signup');
+    const showLoginBtn = document.getElementById('show-login');
+    const formTitle = document.getElementById('form-title');
+    showSignupBtn.onclick = function() {
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'flex';
+      formTitle.textContent = 'Kayıt Ol';
+    };
+    showLoginBtn.onclick = function() {
+      signupForm.style.display = 'none';
+      loginForm.style.display = 'flex';
+      formTitle.textContent = 'Giriş Yap';
+    };
+    // Demo giriş
+    loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
-      const email = document.getElementById('register-email').value;
-      const password = document.getElementById('register-password').value;
-      // Burada backend entegrasyonu yapılabilir
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+      errorDiv.textContent = '';
       if (!email.includes('@')) {
-        document.getElementById('register-error').textContent = 'Geçerli bir e-posta girin.';
+        errorDiv.textContent = 'Geçerli bir e-posta girin.';
         return;
       }
       if (password.length < 6) {
-        document.getElementById('register-error').textContent = 'Şifre en az 6 karakter olmalı.';
+        errorDiv.textContent = 'Şifre en az 6 karakter olmalı.';
         return;
       }
-      document.getElementById('register-error').textContent = 'Kayıt başarılı! (Demo)';
+      // Demo: Her giriş başarılı
+      errorDiv.style.color = '#43ea7b';
+      errorDiv.textContent = 'Giriş başarılı! (Demo)';
+    });
+    // Demo kayıt
+    signupForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const errorDiv = document.getElementById('signup-error');
+      const successDiv = document.getElementById('signup-success');
+      errorDiv.textContent = '';
+      successDiv.textContent = '';
+      if (!email.includes('@')) {
+        errorDiv.textContent = 'Geçerli bir e-posta girin.';
+        return;
+      }
+      if (password.length < 6) {
+        errorDiv.textContent = 'Şifre en az 6 karakter olmalı.';
+        return;
+      }
+      // Demo: Her kayıt başarılı
+      successDiv.textContent = 'Kayıt başarılı! Şimdi giriş yapabilirsin.';
+      setTimeout(() => {
+        showLoginBtn.click();
+      }, 1200);
     });
   </script>
 </body>
