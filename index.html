@@ -276,6 +276,64 @@
     const showLoginBtn = document.getElementById('show-login');
     const signupErrorMessage = document.getElementById('signup-error-message');
 
+    // Doğrulama kodu modalı oluştur
+    function showCodeModal(expectedCode, email, password) {
+      let modal = document.getElementById('verify-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'verify-modal';
+        modal.innerHTML = `
+          <div class="verify-modal-bg"></div>
+          <div class="verify-modal-content">
+            <h4>E-posta Doğrulama</h4>
+            <p>Mail adresinize gönderilen 6 haneli kodu girin:</p>
+            <input id="verify-code-input" type="text" maxlength="6" pattern="[0-9]{6}" style="font-size:1.3rem;text-align:center;letter-spacing:0.3em;padding:0.5em 1em;border-radius:8px;border:1px solid #ccc;width:80%;margin-bottom:1em;" autofocus />
+            <div id="verify-timer" style="margin-bottom:1em;color:#ff9800;font-weight:bold;font-size:1.1rem;">30</div>
+            <button id="verify-submit-btn" style="background:#43ea7b;color:#23272b;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;">Doğrula</button>
+            <div id="verify-error" style="color:#ff6b6b;margin-top:0.7em;"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } else {
+        modal.style.display = 'block';
+      }
+      document.body.style.overflow = 'hidden';
+      let timer = 30;
+      const timerEl = document.getElementById('verify-timer');
+      const errorEl = document.getElementById('verify-error');
+      timerEl.textContent = timer;
+      errorEl.textContent = '';
+      let interval = setInterval(() => {
+        timer--;
+        timerEl.textContent = timer;
+        if (timer <= 0) {
+          clearInterval(interval);
+          errorEl.textContent = 'Süre doldu. Lütfen tekrar kayıt olun.';
+          document.getElementById('verify-submit-btn').disabled = true;
+        }
+      }, 1000);
+      document.getElementById('verify-submit-btn').onclick = function() {
+        const val = document.getElementById('verify-code-input').value.trim();
+        if (val === expectedCode.toString()) {
+          clearInterval(interval);
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+          // Kayıt işlemini tamamla
+          firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then(() => {
+              showSuccessMessage('Kayıt başarılı! Giriş yapabilirsiniz.');
+              signupForm.style.display = 'none';
+              loginForm.style.display = 'block';
+            })
+            .catch(err => {
+              signupErrorMessage.textContent = err.message;
+            });
+        } else {
+          errorEl.textContent = 'Kod yanlış!';
+        }
+      };
+    }
+
     showSignupBtn.onclick = function() {
       loginForm.style.display = 'none';
       signupForm.style.display = 'block';
@@ -289,15 +347,18 @@
       e.preventDefault();
       const email = document.getElementById('signup-email').value;
       const password = document.getElementById('signup-password').value;
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          alert('Kayıt başarılı! Giriş yapabilirsiniz.');
-          signupForm.style.display = 'none';
-          loginForm.style.display = 'block';
-        })
-        .catch(err => {
-          signupErrorMessage.textContent = err.message;
-        });
+      // 6 haneli kod üret
+      const code = Math.floor(100000 + Math.random() * 900000);
+      // EmailJS ile kodu gönder
+      emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+        to_email: email,
+        code: code
+      })
+      .then(function() {
+        showCodeModal(code, email, password);
+      }, function(error) {
+        signupErrorMessage.textContent = "Kod gönderilemedi: " + error.text;
+      });
     });
 
     // Mouse takip eden spotlight animasyonu
@@ -521,9 +582,25 @@
       60% { opacity: 1; transform: translateX(-50%) scale(1.08) translateY(0); }
       100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
     }
+    /* Doğrulama kodu modalı */
+    #verify-modal { position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;display:block; }
+    .verify-modal-bg { position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.85);z-index:1; }
+    .verify-modal-content { position:relative;z-index:2;background:#fff;border-radius:18px;box-shadow:0 4px 32px #0008;padding:2.2rem 2rem 1.5rem 2rem;max-width:340px;margin:8vh auto 0 auto;text-align:center; }
+    .verify-modal-content h4 { color:#23272b;font-size:1.3rem;margin-bottom:0.7em;font-weight:700; }
+    .verify-modal-content p { color:#444;font-size:1.08rem;margin-bottom:1em; }
+    #verify-code-input { letter-spacing:0.3em; }
+    #verify-timer { color:#ff9800;font-weight:bold;font-size:1.1rem; }
+    #verify-error { color:#ff6b6b;margin-top:0.7em; }
   </style>
   <!-- Bootstrap 5 JS (isteğe bağlı) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init("YOUR_USER_ID"); // Buraya kendi User ID'ni yaz
+    })();
+  </script>
   <!-- Chat kutusu arayüzü -->
   <style>
     #chat-container {
