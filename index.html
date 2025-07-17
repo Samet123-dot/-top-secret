@@ -246,6 +246,14 @@
       }, 2200);
     }
 
+    // Oturum kontrolü: Sayfa yüklenince girişli mi kontrol et
+    window.addEventListener('DOMContentLoaded', function() {
+      if (localStorage.getItem('isLoggedIn') === 'true') {
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+      }
+    });
+
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const email = document.getElementById('email').value;
@@ -255,6 +263,7 @@
           showSuccessMessage('Giriş başarılı!');
           document.getElementById('auth-container').style.display = 'none';
           document.getElementById('chat-container').style.display = 'flex';
+          localStorage.setItem('isLoggedIn', 'true');
         })
         .catch(err => {
           errorMessage.textContent = err.message;
@@ -441,6 +450,7 @@
       const chatForm = document.getElementById('chat-form');
       const chatInput = document.getElementById('chat-input');
       const chatMessages = document.getElementById('chat-messages');
+      const logoutBtn = document.getElementById('logout-btn');
       let username = localStorage.getItem('chat-username');
       function askUsername() {
         username = prompt('Kullanıcı adınızı girin:');
@@ -472,6 +482,18 @@
         chatMessages.appendChild(msgDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
       });
+      // Çıkış butonu
+      if (logoutBtn) {
+        logoutBtn.onclick = function() {
+          localStorage.removeItem('isLoggedIn');
+          // auth.signOut() ile Firebase oturumunu da kapat
+          firebase.auth().signOut().then(() => {
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'block';
+            showSuccessMessage('Çıkış yapıldı.');
+          });
+        };
+      }
     };
   </script>
   <style>
@@ -593,6 +615,7 @@
         <input id="chat-input" type="text" placeholder="Mesajınızı yazın..." maxlength="300" required />
         <button id="chat-send" type="submit">Gönder</button>
       </form>
+      <button id="logout-btn" style="margin-top:1.2em; background:linear-gradient(90deg,#283593 0%,#ff9800 100%);color:#fff;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;transition:background 0.3s;">Çıkış Yap</button>
     </div>
   </div>
 </body>
