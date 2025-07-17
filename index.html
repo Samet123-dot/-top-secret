@@ -16,18 +16,96 @@
             height: 100vh;
             margin: 0;
         }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+        #login-form {
+            background: #222;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #0008;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
-        p {
-            font-size: 1.5rem;
-            opacity: 0.7;
+        #main-content { display: none; }
+        input {
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: none;
+            font-size: 1rem;
         }
+        button {
+            padding: 0.7rem;
+            border-radius: 5px;
+            border: none;
+            background: #0f0;
+            color: #111;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .error { color: #f55; font-size: 1rem; }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
-    <h1>top secret</h1>
-    <p>top secret</p>
+    <form id="login-form">
+        <h2>Giriş Yap</h2>
+        <input type="email" id="email" placeholder="E-posta" required />
+        <input type="password" id="password" placeholder="Şifre" required />
+        <button type="submit">Giriş Yap</button>
+        <div class="error" id="error-message"></div>
+    </form>
+    <div id="main-content">
+        <h1>top secret</h1>
+        <p>top secret</p>
+        <button onclick="logout()">Çıkış Yap</button>
+    </div>
+    <script>
+      // Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyD39X1qF5C39TYzPcOhmo5lJVlRfU-dRvc",
+        authDomain: "top-secret-a5628.firebaseapp.com",
+        projectId: "top-secret-a5628",
+        storageBucket: "top-secret-a5628.appspot.com",
+        messagingSenderId: "854924115836",
+        appId: "1:854924115836:web:be1a865f48e7a868376ef9",
+        measurementId: "G-36WWQ06YRK"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+
+      // Giriş formu işlemleri
+      const loginForm = document.getElementById('login-form');
+      const errorMessage = document.getElementById('error-message');
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => {
+            loginForm.style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+          })
+          .catch(err => {
+            errorMessage.textContent = err.message;
+          });
+      });
+
+      // Oturum kontrolü
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          loginForm.style.display = 'none';
+          document.getElementById('main-content').style.display = 'block';
+        } else {
+          loginForm.style.display = 'flex';
+          document.getElementById('main-content').style.display = 'none';
+        }
+      });
+
+      // Çıkış fonksiyonu
+      function logout() {
+        auth.signOut();
+      }
+    </script>
 </body>
 </html> 
