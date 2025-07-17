@@ -12,8 +12,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
     body {
-      background: #0b0b12;
-      color: #eaeaf0;
+      background: #111216;
+      color: #f5f5f7;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -26,104 +26,54 @@
       position: fixed;
       z-index: 0;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: url('https://www.transparenttextures.com/patterns/noise.png'), radial-gradient(circle at 30% 30%, #805aff33 0%, transparent 60%), radial-gradient(circle at 80% 70%, #3a3a4d55 0%, transparent 60%);
+      background: radial-gradient(circle at 20% 30%, #ff980033 0%, transparent 60%),
+                  radial-gradient(circle at 80% 70%, #28359333 0%, transparent 60%);
       opacity: 0.18;
       pointer-events: none;
     }
     .auth-card {
-      background: #16161d;
-      border-radius: 32px;
-      box-shadow: 0 8px 48px #000e, 0 1.5px 0 #23272b;
-      padding: 3.2rem 2.4rem 2.4rem 2.4rem;
+      background: #181a1b;
+      border-radius: 22px;
+      box-shadow: 0 6px 32px #000b, 0 1.5px 0 #23272b;
+      padding: 2.7rem 2.1rem 2.1rem 2.1rem;
       width: 100%;
-      max-width: 440px;
+      max-width: 390px;
       opacity: 0;
       transform: translateY(-60px) scale(0.98);
       animation: cardFadeIn 1.1s cubic-bezier(.68,-0.55,.27,1.55) 0.2s forwards;
       position: relative;
       z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 2vh auto;
+      transition: box-shadow 0.3s, filter 0.3s;
+      --spot-x: 50%;
+      --spot-y: 50%;
+      background-image: radial-gradient(600px circle at var(--spot-x) var(--spot-y), rgba(255,152,0,0.10), transparent 80%);
     }
-    .auth-card .avatar {
-      width: 74px;
-      height: 74px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #805aff 0%, #23232b 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.3rem;
-      box-shadow: 0 2px 16px #805aff44;
-      font-size: 2.5rem;
-      color: #fff;
-      border: 3px solid #23232b;
+    .auth-card:hover {
+      box-shadow: 0 12px 48px #ff980044, 0 0 0 4px #28359333;
+      filter: brightness(1.06) saturate(1.12);
     }
-    .logo {
-      font-size: 2.2rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-      margin-bottom: 0.5rem;
-      color: #805aff;
-      text-align: center;
-      text-shadow: 0 2px 8px #805aff22;
-      opacity: 0;
-      transform: scale(0.8) rotate(-8deg);
-      animation: logoPop 1.1s cubic-bezier(.68,-0.55,.27,1.55) 0.5s forwards;
-    }
-    .subtitle {
-      color: #b0b0c3;
-      text-align: center;
-      font-size: 1.08rem;
-      margin-bottom: 1.7rem;
-      font-weight: 400;
-      letter-spacing: 0.2px;
-    }
-    @keyframes logoPop {
-      60% {
-        opacity: 1;
-        transform: scale(1.15) rotate(4deg);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1) rotate(0deg);
-      }
-    }
-    h4 {
-      color: #805aff;
-      text-align: center;
-      margin-bottom: 1.2rem;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: titleFadeIn 0.8s cubic-bezier(.68,-0.55,.27,1.55) 0.7s forwards;
-      font-size: 1.35rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    @keyframes titleFadeIn {
+    @keyframes cardFadeIn {
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
       }
     }
     .form-control, .form-control:focus {
-      background: #13131a;
-      color: #eaeaf0;
-      border: 2px solid #23232b;
+      background: #131417;
+      color: #f5f5f7;
+      border: 1.5px solid #23272b;
       border-radius: 12px;
-      font-size: 1.18rem;
-      padding: 1em 1.3em;
-      margin-bottom: 1.3em;
+      font-size: 1.08rem;
+      padding: 0.7em 1.1em;
+      margin-bottom: 1.1em;
       transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
       position: relative;
       z-index: 1;
     }
     .form-control:focus {
-      box-shadow: 0 0 0 3px #805aff55, 0 2px 8px #805aff22;
-      border-color: #805aff;
-      background: #18181f;
+      box-shadow: 0 0 0 3px #ff9800cc, 0 2px 8px #28359344;
+      border-color: #ff9800;
+      background: #181a1b;
       outline: none;
     }
     .btn-primary, .btn-secondary {
@@ -131,40 +81,38 @@
       overflow: hidden;
       border-radius: 12px;
       font-weight: bold;
-      font-size: 1.18rem;
+      font-size: 1.08rem;
       letter-spacing: 0.5px;
       box-shadow: 0 2px 8px #0002;
-      padding: 1em 1.3em;
-      margin-bottom: 0.7em;
-      width: 100%;
+      padding: 0.7em 1.2em;
     }
     .btn-primary {
-      background: linear-gradient(90deg, #805aff 0%, #23232b 100%);
+      background: linear-gradient(90deg, #ff9800 0%, #283593 100%);
       border: none;
       color: #fff;
       transition: transform 0.18s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.18s;
     }
     .btn-primary:focus, .btn-primary:hover {
-      background: linear-gradient(90deg, #a084ff 0%, #805aff 100%);
+      background: linear-gradient(90deg, #ffa726 0%, #1a237e 100%);
       color: #fff;
-      transform: scale(1.04) translateY(-2px) rotate(-1deg);
-      box-shadow: 0 6px 24px #805aff33;
+      transform: scale(1.06) translateY(-2px) rotate(-1deg);
+      box-shadow: 0 6px 24px #ff980044;
     }
     .btn-secondary {
-      background: #23232b;
+      background: #23272b;
       border: none;
-      color: #805aff;
+      color: #ff9800;
       transition: transform 0.18s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.18s;
     }
     .btn-secondary:focus, .btn-secondary:hover {
-      background: #805aff;
-      color: #23232b;
-      transform: scale(1.04) translateY(-2px) rotate(1deg);
-      box-shadow: 0 6px 24px #805aff33;
+      background: #ff9800;
+      color: #23272b;
+      transform: scale(1.06) translateY(-2px) rotate(1deg);
+      box-shadow: 0 6px 24px #28359344;
     }
     .error {
       color: #ff6b6b;
-      font-size: 1.13rem;
+      font-size: 1.04rem;
       margin-top: 0.5rem;
       margin-bottom: 0.5rem;
       text-align: center;
@@ -193,6 +141,42 @@
       60% { opacity: 1; transform: translateX(-50%) scale(1.08) translateY(0); }
       100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
     }
+    .logo {
+      font-size: 2.3rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 1.7rem;
+      color: #ff9800;
+      text-align: center;
+      text-shadow: 0 2px 8px #28359344;
+      opacity: 0;
+      transform: scale(0.8) rotate(-8deg);
+      animation: logoPop 1.1s cubic-bezier(.68,-0.55,.27,1.55) 0.5s forwards;
+    }
+    @keyframes logoPop {
+      60% {
+        opacity: 1;
+        transform: scale(1.15) rotate(4deg);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+    h4 {
+      color: #ff9800;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: titleFadeIn 0.8s cubic-bezier(.68,-0.55,.27,1.55) 0.7s forwards;
+    }
+    @keyframes titleFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
     #chat-container {
       display: none;
       flex-direction: column;
@@ -200,7 +184,7 @@
       justify-content: flex-end;
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(14,14,19,0.98);
+      background: rgba(17,18,22,0.98);
       z-index: 10;
       padding: 0;
       margin: 0;
@@ -208,11 +192,11 @@
     }
     .chat-box {
       width: 100%;
-      max-width: 480px;
-      background: #18181f;
-      border-radius: 32px;
-      box-shadow: 0 8px 40px #000e;
-      padding: 2.1rem 1.5rem 1.5rem 1.5rem;
+      max-width: 420px;
+      background: #181a1b;
+      border-radius: 22px;
+      box-shadow: 0 4px 32px #000b;
+      padding: 1.7rem 1.2rem 1.2rem 1.2rem;
       margin-bottom: 2.5rem;
       display: flex;
       flex-direction: column;
@@ -222,31 +206,19 @@
       flex: 1;
       overflow-y: auto;
       margin-bottom: 1rem;
-      background: #13131a;
-      border-radius: 18px;
-      padding: 1.2rem;
-      font-size: 1.13rem;
+      background: #131417;
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 1.08rem;
       color: #fff;
-      box-shadow: 0 2px 8px #805aff22;
-      display: flex;
-      flex-direction: column;
-      gap: 0.9em;
+      box-shadow: 0 2px 8px #28359322;
     }
     .chat-message {
-      display: inline-block;
-      max-width: 80%;
-      background: #23232b;
-      border-radius: 22px 22px 22px 8px;
-      padding: 0.9em 1.3em;
-      color: #fff;
-      margin-bottom: 0.2em;
+      margin-bottom: 0.7em;
       word-break: break-word;
-      box-shadow: 0 2px 8px #805aff11;
-      font-size: 1.13rem;
-      position: relative;
     }
     .chat-user {
-      color: #805aff;
+      color: #ff9800;
       font-weight: bold;
       margin-right: 0.4em;
     }
@@ -259,47 +231,47 @@
     }
     #chat-input {
       flex: 1;
-      border-radius: 12px;
-      border: 2px solid #23232b;
-      background: #13131a;
+      border-radius: 10px;
+      border: 1.5px solid #23272b;
+      background: #131417;
       color: #fff;
-      padding: 0.9em 1.2em;
-      font-size: 1.13rem;
+      padding: 0.6em 1em;
+      font-size: 1.08rem;
       outline: none;
       transition: border-color 0.3s;
     }
     #chat-input:focus {
-      border-color: #805aff;
+      border-color: #ff9800;
     }
     #chat-send {
-      background: linear-gradient(90deg, #805aff 0%, #23232b 100%);
+      background: linear-gradient(90deg, #ff9800 0%, #283593 100%);
       color: #fff;
       border: none;
-      border-radius: 12px;
-      padding: 0.9em 1.3em;
-      font-size: 1.13rem;
+      border-radius: 10px;
+      padding: 0.6em 1.2em;
+      font-size: 1.08rem;
       font-weight: bold;
       cursor: pointer;
       transition: background 0.3s, transform 0.18s;
     }
     #chat-send:hover {
-      background: linear-gradient(90deg, #a084ff 0%, #805aff 100%);
-      transform: scale(1.04) translateY(-2px) rotate(-1deg);
+      background: linear-gradient(90deg, #ffa726 0%, #1a237e 100%);
+      transform: scale(1.06) translateY(-2px) rotate(-1deg);
     }
     #logout-btn {
       margin-top:1.2em;
-      background:linear-gradient(90deg,#805aff 0%,#23232b 100%);
+      background:linear-gradient(90deg,#283593 0%,#ff9800 100%);
       color:#fff;
       font-weight:bold;
       border:none;
-      border-radius:12px;
-      padding:0.9em 1.3em;
+      border-radius:10px;
+      padding:0.6em 1.2em;
       cursor:pointer;
       transition:background 0.3s;
     }
     #logout-btn:hover {
-      background:linear-gradient(90deg,#a084ff 0%,#805aff 100%);
-      color:#23232b;
+      background:linear-gradient(90deg,#ff9800 0%,#283593 100%);
+      color:#23272b;
     }
     @media (max-width: 600px) {
       .auth-card, .chat-box {
