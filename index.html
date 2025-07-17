@@ -286,21 +286,7 @@
       card.style.setProperty('--spot-y', '50%');
     });
 
-    // Mouse button kontrolü (resimdeki kod)
-    const Input = { mouse: { left: false, middle: false, right: false } };
-    document.addEventListener("mousedown", function(event) {
-      if (event.button === 0) {
-        Input.mouse.left = true;
-      }
-      if (event.button === 1) {
-        Input.mouse.middle = true;
-      }
-      if (event.button === 2) {
-        Input.mouse.right = true;
-      }
-    });
-
-    // === Mouse'u takip eden segmentli yılan (iskelet) animasyonu ===
+    // === Ejderha animasyonu: rastgele gezinme ===
     const canvas = document.getElementById('snake-canvas');
     const ctx = canvas.getContext('2d');
     let width = window.innerWidth;
@@ -321,17 +307,27 @@
     for (let i = 0; i < SEGMENTS; i++) {
       snake.push({ x: width/2, y: height/2, angle: 0 });
     }
-    let mouse = { x: width/2, y: height/2 };
-    document.addEventListener('mousemove', e => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-    });
-
+    let dragonTarget = { x: width/2, y: height/2 };
+    let changeTargetTimer = 0;
+    function randomTarget() {
+      // Ekran kenarlarından biraz içeride rastgele bir hedef
+      const margin = 60;
+      return {
+        x: Math.random() * (width - 2*margin) + margin,
+        y: Math.random() * (height - 2*margin) + margin
+      };
+    }
     function animateDragon() {
-      // Baş segment mouse'a yaklaşır
+      // Hedefi belli aralıklarla değiştir
+      changeTargetTimer--;
+      if (changeTargetTimer <= 0) {
+        dragonTarget = randomTarget();
+        changeTargetTimer = 80 + Math.random() * 120; // 1-2 saniyede bir
+      }
+      // Baş segment hedefe yaklaşır
       const head = snake[0];
-      const dx = mouse.x - head.x;
-      const dy = mouse.y - head.y;
+      const dx = dragonTarget.x - head.x;
+      const dy = dragonTarget.y - head.y;
       head.angle = Math.atan2(dy, dx);
       head.x += Math.cos(head.angle) * 6;
       head.y += Math.sin(head.angle) * 6;
@@ -349,10 +345,9 @@
         }
         seg.angle = angle;
       }
-      // Çizim
+      // Çizim (aynı)
       ctx.clearRect(0, 0, width, height);
       ctx.save();
-      // Ejderha gövdesi (renk geçişli)
       for (let i = SEGMENTS-1; i > 0; i--) {
         const grad = ctx.createLinearGradient(snake[i].x, snake[i].y, snake[i-1].x, snake[i-1].y);
         grad.addColorStop(0, '#283593');
@@ -364,7 +359,6 @@
         ctx.lineTo(snake[i-1].x, snake[i-1].y);
         ctx.stroke();
       }
-      // Dikenler (her 4. segmentte bir)
       for (let i = 4; i < SEGMENTS; i += 4) {
         const seg = snake[i];
         const angle = seg.angle - Math.PI/2;
@@ -377,11 +371,9 @@
         ctx.stroke();
         ctx.restore();
       }
-      // Baş (büyük, gözlü, ağızlı)
       ctx.save();
       ctx.translate(head.x, head.y);
       ctx.rotate(head.angle);
-      // Baş şekli
       ctx.beginPath();
       ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI*2);
       ctx.fillStyle = '#ff9800';
@@ -389,7 +381,6 @@
       ctx.shadowBlur = 16;
       ctx.fill();
       ctx.shadowBlur = 0;
-      // Göz
       ctx.beginPath();
       ctx.arc(8, -4, 3, 0, Math.PI*2);
       ctx.fillStyle = '#fff';
@@ -398,14 +389,12 @@
       ctx.arc(8, -4, 1.2, 0, Math.PI*2);
       ctx.fillStyle = '#283593';
       ctx.fill();
-      // Ağız
       ctx.beginPath();
       ctx.moveTo(12, 4);
       ctx.quadraticCurveTo(16, 10, 6, 8);
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2;
       ctx.stroke();
-      // Boynuzlar
       ctx.beginPath();
       ctx.moveTo(-8, -10);
       ctx.lineTo(-18, -22);
