@@ -115,10 +115,119 @@
       }
       .auth-title { font-size: 1.4rem; }
     }
+    .chat-card {
+      background: #232136;
+      border-radius: 22px;
+      box-shadow: 0 8px 32px #7c3aed33, 0 1.5px 0 #23272b;
+      padding: 2.1rem 1.2rem 1.2rem 1.2rem;
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      height: 70vh;
+      min-height: 400px;
+      position: relative;
+      z-index: 2;
+      animation: cardFadeIn 1.1s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    .chat-title {
+      color: #ff9800;
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 1.1rem;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 8px #7c3aed33;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      background: #181a1b;
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 1.08rem;
+      color: #fff;
+      box-shadow: 0 2px 8px #7c3aed22;
+      margin-bottom: 1rem;
+    }
+    .chat-message {
+      margin-bottom: 0.7em;
+      word-break: break-word;
+      display: flex;
+      align-items: flex-end;
+    }
+    .chat-user {
+      color: #ff9800;
+      font-weight: bold;
+      margin-right: 0.4em;
+    }
+    .chat-text {
+      color: #fff;
+    }
+    .chat-form {
+      display: flex;
+      gap: 0.5em;
+    }
+    #chat-input {
+      flex: 1;
+      border-radius: 10px;
+      border: 1.5px solid #7c3aed;
+      background: #181a1b;
+      color: #fff;
+      padding: 0.6em 1em;
+      font-size: 1.08rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    #chat-input:focus {
+      border-color: #ff9800;
+    }
+    #chat-send {
+      background: linear-gradient(90deg, #7c3aed 0%, #ff9800 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1.08rem;
+      padding: 0.6em 1.2em;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.18s;
+    }
+    #chat-send:hover {
+      background: linear-gradient(90deg, #ff9800 0%, #7c3aed 100%);
+      transform: scale(1.06) translateY(-2px) rotate(-1deg);
+    }
+    .logout-btn {
+      margin-top:1.2em;
+      background:linear-gradient(90deg,#7c3aed 0%,#ff9800 100%);
+      color:#fff;
+      font-weight:bold;
+      border:none;
+      border-radius:10px;
+      padding:0.6em 1.2em;
+      cursor:pointer;
+      transition:background 0.3s;
+    }
+    .logout-btn:hover {
+      background:linear-gradient(90deg,#ff9800 0%,#7c3aed 100%);
+      color:#23272b;
+    }
+    @media (max-width: 600px) {
+      .chat-card {
+        max-width: 98vw;
+        padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+        border-radius: 18px;
+        height: 60vh;
+        min-height: 300px;
+      }
+      .chat-messages { font-size: 1rem; padding: 0.7rem; }
+      .chat-message { font-size: 1rem; padding: 0.6em 0.8em; }
+    }
   </style>
 </head>
 <body>
-  <div class="auth-card">
+  <div class="auth-card" id="auth-container">
     <div class="auth-title" id="form-title">Giriş Yap</div>
     <form class="auth-form" id="login-form" autocomplete="off">
       <input type="email" id="login-email" placeholder="E-posta" required />
@@ -135,6 +244,17 @@
       <div class="auth-success" id="signup-success"></div>
       <button type="button" class="auth-switch" id="show-login">Zaten hesabın var mı? Giriş Yap</button>
     </form>
+  </div>
+  <div id="chat-container" style="display:none;">
+    <div class="chat-card">
+      <div class="chat-title">Sohbet</div>
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <input id="chat-input" type="text" placeholder="Mesajınızı yazın..." maxlength="300" required />
+        <button id="chat-send" type="submit">Gönder</button>
+      </form>
+      <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
+    </div>
   </div>
   <script>
     // Formlar arası geçiş
@@ -171,6 +291,10 @@
       // Demo: Her giriş başarılı
       errorDiv.style.color = '#43ea7b';
       errorDiv.textContent = 'Giriş başarılı! (Demo)';
+      setTimeout(() => {
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+      }, 700);
     });
     // Demo kayıt
     signupForm.addEventListener('submit', function(e) {
@@ -195,6 +319,38 @@
         showLoginBtn.click();
       }, 1200);
     });
+  </script>
+  <script>
+    // Chat demo JS
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const logoutBtn = document.getElementById('logout-btn');
+    let chatHistory = [];
+    function renderChat() {
+      chatMessages.innerHTML = '';
+      chatHistory.forEach(msg => {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-message';
+        msgDiv.innerHTML = `<span class="chat-user">Sen:</span> <span class="chat-text">${msg}</span>`;
+        chatMessages.appendChild(msgDiv);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    chatForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+      chatHistory.push(text);
+      renderChat();
+      chatInput.value = '';
+    });
+    logoutBtn.onclick = function() {
+      document.getElementById('chat-container').style.display = 'none';
+      document.getElementById('auth-container').style.display = 'block';
+      chatHistory = [];
+      renderChat();
+    };
   </script>
 </body>
 </html> 
