@@ -318,16 +318,17 @@
       };
     }
     function animateDragon() {
-      // Hedefi belli aralıklarla değiştir
+      // Hedefi belli aralıklarla değiştir veya hedefe çok yaklaştıysa hemen değiştir
       changeTargetTimer--;
-      if (changeTargetTimer <= 0) {
-        dragonTarget = randomTarget();
-        changeTargetTimer = 80 + Math.random() * 120; // 1-2 saniyede bir
-      }
-      // Baş segment hedefe yaklaşır
       const head = snake[0];
       const dx = dragonTarget.x - head.x;
       const dy = dragonTarget.y - head.y;
+      const distToTarget = Math.sqrt(dx*dx + dy*dy);
+      if (changeTargetTimer <= 0 || distToTarget < 30) {
+        dragonTarget = randomTarget();
+        changeTargetTimer = 80 + Math.random() * 120;
+      }
+      // Baş segment hedefe yaklaşır
       head.angle = Math.atan2(dy, dx);
       head.x += Math.cos(head.angle) * 6;
       head.y += Math.sin(head.angle) * 6;
