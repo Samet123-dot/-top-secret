@@ -347,18 +347,30 @@
       e.preventDefault();
       const email = document.getElementById('signup-email').value;
       const password = document.getElementById('signup-password').value;
-      // 6 haneli kod üret
-      const code = Math.floor(100000 + Math.random() * 900000);
-      // EmailJS ile kodu gönder
-      emailjs.send("service_a1d2neu", "template_3r4mr8b", {
-        to_email: email,
-        code: code
-      })
-      .then(function() {
-        showCodeModal(code, email, password);
-      }, function(error) {
-        signupErrorMessage.textContent = "Kod gönderilemedi: " + error.text;
-      });
+      signupErrorMessage.textContent = '';
+      // Önce e-posta zaten kayıtlı mı kontrol et
+      firebase.auth().fetchSignInMethodsForEmail(email)
+        .then((methods) => {
+          if (methods && methods.length > 0) {
+            signupErrorMessage.textContent = 'Bu e-posta adresiyle zaten kayıt olunmuş. Lütfen giriş yapın veya başka bir e-posta deneyin.';
+            return;
+          }
+          // 6 haneli kod üret
+          const code = Math.floor(100000 + Math.random() * 900000);
+          // EmailJS ile kodu gönder
+          emailjs.send("service_a1d2neu", "template_3r4mr8b", {
+            to_email: email,
+            code: code
+          })
+          .then(function() {
+            showCodeModal(code, email, password);
+          }, function(error) {
+            signupErrorMessage.textContent = "Kod gönderilemedi: " + error.text;
+          });
+        })
+        .catch((err) => {
+          signupErrorMessage.textContent = 'Bir hata oluştu: ' + err.message;
+        });
     });
 
     // Mouse takip eden spotlight animasyonu
