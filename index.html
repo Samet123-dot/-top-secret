@@ -7,44 +7,59 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body { background: #181a1b; color: #fff; font-family: Arial; }
-    #messages { height: 250px; overflow-y: auto; background: #23272b; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #333; }
+    body { background: #181a1b; color: #fff; font-family: Arial; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+    .chat-container { background: #23272b; border-radius: 12px; box-shadow: 0 4px 32px #0008; padding: 2rem; width: 100%; max-width: 400px; }
+    #messages { height: 250px; overflow-y: auto; background: #181a1b; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #333; }
     #chat-form { display: flex; gap: 8px; }
-    #chat-input { flex: 1; }
+    #chat-input { flex: 1; padding: 0.5rem; border-radius: 5px; border: none; background: #23272b; color: #fff; }
+    #chat-input:focus { outline: 2px solid #00c6fb; }
+    #send-btn { background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%); color: #fff; border: none; border-radius: 5px; padding: 0 1.2rem; font-weight: bold; cursor: pointer; }
     .msg { margin-bottom: 8px; }
     .msg b { color: #00c6fb; }
+    h1 { color: #00c6fb; text-align: center; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-  <h1>Firebase Chat</h1>
-  <div id="messages"></div>
-  <form id="chat-form">
-    <input type="text" id="chat-input" placeholder="Mesajınızı yazın..." required />
-    <button type="submit">Gönder</button>
-  </form>
+  <div class="chat-container">
+    <h1>Firebase Chat</h1>
+    <div id="messages"></div>
+    <form id="chat-form" autocomplete="off">
+      <input type="text" id="chat-input" placeholder="Mesajınızı yazın..." required />
+      <button type="submit" id="send-btn">Gönder</button>
+    </form>
+  </div>
   <script>
     // Firebase config
     var firebaseConfig = {
       databaseURL: "https://top-secret-a5628-default-rtdb.firebaseio.com/"
     };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     var db = firebase.database();
 
     // Mesajları dinle ve ekrana yaz
-    db.ref('messages').on('child_added', function(snapshot) {
-      var data = snapshot.val();
+    function addMessage(data) {
       var messagesDiv = document.getElementById('messages');
       var msgDiv = document.createElement('div');
       msgDiv.className = 'msg';
       msgDiv.innerHTML = `<b>${data.user}:</b> ${data.text}`;
       messagesDiv.appendChild(msgDiv);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    document.getElementById('messages').innerHTML = '';
+    db.ref('messages').off();
+    db.ref('messages').on('child_added', function(snapshot) {
+      var data = snapshot.val();
+      addMessage(data);
     });
 
     // Mesaj gönder
     document.getElementById('chat-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      var user = prompt('Adınız (veya e-posta):');
+      var user = localStorage.getItem('chatUser') || prompt('Adınız (veya e-posta):');
+      if (!user) return;
+      localStorage.setItem('chatUser', user);
       var text = document.getElementById('chat-input').value;
       db.ref('messages').push({ user, text });
       document.getElementById('chat-input').value = '';
