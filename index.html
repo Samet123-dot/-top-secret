@@ -327,7 +327,7 @@
       mouse.y = e.clientY;
     });
 
-    function animateSnake() {
+    function animateDragon() {
       // Baş segment mouse'a yaklaşır
       const head = snake[0];
       const dx = mouse.x - head.x;
@@ -352,25 +352,73 @@
       // Çizim
       ctx.clearRect(0, 0, width, height);
       ctx.save();
+      // Ejderha gövdesi (renk geçişli)
+      for (let i = SEGMENTS-1; i > 0; i--) {
+        const grad = ctx.createLinearGradient(snake[i].x, snake[i].y, snake[i-1].x, snake[i-1].y);
+        grad.addColorStop(0, '#283593');
+        grad.addColorStop(1, '#ff9800');
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 8 * (i / SEGMENTS) + 2;
+        ctx.beginPath();
+        ctx.moveTo(snake[i].x, snake[i].y);
+        ctx.lineTo(snake[i-1].x, snake[i-1].y);
+        ctx.stroke();
+      }
+      // Dikenler (her 4. segmentte bir)
+      for (let i = 4; i < SEGMENTS; i += 4) {
+        const seg = snake[i];
+        const angle = seg.angle - Math.PI/2;
+        ctx.save();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(seg.x, seg.y);
+        ctx.lineTo(seg.x + Math.cos(angle) * 18, seg.y + Math.sin(angle) * 18);
+        ctx.stroke();
+        ctx.restore();
+      }
+      // Baş (büyük, gözlü, ağızlı)
+      ctx.save();
+      ctx.translate(head.x, head.y);
+      ctx.rotate(head.angle);
+      // Baş şekli
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI*2);
+      ctx.fillStyle = '#ff9800';
+      ctx.shadowColor = '#ff9800';
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Göz
+      ctx.beginPath();
+      ctx.arc(8, -4, 3, 0, Math.PI*2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(8, -4, 1.2, 0, Math.PI*2);
+      ctx.fillStyle = '#283593';
+      ctx.fill();
+      // Ağız
+      ctx.beginPath();
+      ctx.moveTo(12, 4);
+      ctx.quadraticCurveTo(16, 10, 6, 8);
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(snake[0].x, snake[0].y);
-      for (let i = 1; i < SEGMENTS; i++) {
-        ctx.lineTo(snake[i].x, snake[i].y);
-      }
       ctx.stroke();
-      // Segment eklemleri
-      for (let i = 0; i < SEGMENTS; i++) {
-        ctx.beginPath();
-        ctx.arc(snake[i].x, snake[i].y, 3, 0, Math.PI*2);
-        ctx.fillStyle = i === 0 ? '#ff9800' : '#fff';
-        ctx.fill();
-      }
+      // Boynuzlar
+      ctx.beginPath();
+      ctx.moveTo(-8, -10);
+      ctx.lineTo(-18, -22);
+      ctx.moveTo(-8, 10);
+      ctx.lineTo(-18, 22);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
       ctx.restore();
-      requestAnimationFrame(animateSnake);
+      ctx.restore();
+      requestAnimationFrame(animateDragon);
     }
-    animateSnake();
+    animateDragon();
   </script>
   <!-- Bootstrap 5 JS (isteğe bağlı) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
