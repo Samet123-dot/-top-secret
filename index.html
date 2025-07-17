@@ -2,608 +2,128 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Giriş / Kayıt</title>
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <!-- Firestore SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <title>Kayıt Ol</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #111216;
-      color: #f5f5f7;
       min-height: 100vh;
+      background: #181a1b;
+      color: #f5f5f7;
+      font-family: 'Inter', Arial, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      position: relative;
+      margin: 0;
+      padding: 0;
     }
-    body::before {
-      content: '';
-      position: fixed;
-      z-index: 0;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(circle at 20% 30%, #ff980033 0%, transparent 60%),
-                  radial-gradient(circle at 80% 70%, #28359333 0%, transparent 60%);
-      opacity: 0.18;
-      pointer-events: none;
-    }
-    .auth-card {
-      background: #181a1b;
+    .register-card {
+      background: #232136;
       border-radius: 22px;
-      box-shadow: 0 6px 32px #000b, 0 1.5px 0 #23272b;
-      padding: 2.7rem 2.1rem 2.1rem 2.1rem;
+      box-shadow: 0 8px 32px #7c3aed33, 0 1.5px 0 #23272b;
+      padding: 2.5rem 2.1rem 2.1rem 2.1rem;
       width: 100%;
-      max-width: 390px;
-      opacity: 0;
-      transform: translateY(-60px) scale(0.98);
-      animation: cardFadeIn 1.1s cubic-bezier(.68,-0.55,.27,1.55) 0.2s forwards;
+      max-width: 370px;
       position: relative;
       z-index: 1;
-      transition: box-shadow 0.3s, filter 0.3s;
-      --spot-x: 50%;
-      --spot-y: 50%;
-      background-image: radial-gradient(600px circle at var(--spot-x) var(--spot-y), rgba(255,152,0,0.10), transparent 80%);
-    }
-    .auth-card:hover {
-      box-shadow: 0 12px 48px #ff980044, 0 0 0 4px #28359333;
-      filter: brightness(1.06) saturate(1.12);
+      animation: cardFadeIn 1.1s cubic-bezier(.68,-0.55,.27,1.55);
     }
     @keyframes cardFadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      0% { opacity: 0; transform: translateY(-60px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .form-control, .form-control:focus {
-      background: #131417;
+    .register-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ff9800;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 8px #7c3aed33;
+    }
+    .register-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1em;
+    }
+    .register-form input {
+      background: #181a1b;
       color: #f5f5f7;
-      border: 1.5px solid #23272b;
+      border: 1.5px solid #7c3aed;
       border-radius: 12px;
       font-size: 1.08rem;
       padding: 0.7em 1.1em;
-      margin-bottom: 1.1em;
       transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
-      position: relative;
-      z-index: 1;
-    }
-    .form-control:focus {
-      box-shadow: 0 0 0 3px #ff9800cc, 0 2px 8px #28359344;
-      border-color: #ff9800;
-      background: #181a1b;
       outline: none;
     }
-    .btn-primary, .btn-secondary {
-      position: relative;
-      overflow: hidden;
+    .register-form input:focus {
+      box-shadow: 0 0 0 3px #ff9800cc, 0 2px 8px #7c3aed44;
+      border-color: #ff9800;
+      background: #232136;
+    }
+    .register-btn {
+      background: linear-gradient(90deg, #7c3aed 0%, #ff9800 100%);
+      border: none;
+      color: #fff;
       border-radius: 12px;
       font-weight: bold;
       font-size: 1.08rem;
       letter-spacing: 0.5px;
-      box-shadow: 0 2px 8px #0002;
+      box-shadow: 0 2px 8px #7c3aed22;
       padding: 0.7em 1.2em;
-    }
-    .btn-primary {
-      background: linear-gradient(90deg, #ff9800 0%, #283593 100%);
-      border: none;
-      color: #fff;
+      cursor: pointer;
       transition: transform 0.18s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.18s;
     }
-    .btn-primary:focus, .btn-primary:hover {
-      background: linear-gradient(90deg, #ffa726 0%, #1a237e 100%);
+    .register-btn:hover, .register-btn:focus {
+      background: linear-gradient(90deg, #ff9800 0%, #7c3aed 100%);
       color: #fff;
       transform: scale(1.06) translateY(-2px) rotate(-1deg);
       box-shadow: 0 6px 24px #ff980044;
     }
-    .btn-secondary {
-      background: #23272b;
-      border: none;
-      color: #ff9800;
-      transition: transform 0.18s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.18s;
-    }
-    .btn-secondary:focus, .btn-secondary:hover {
-      background: #ff9800;
-      color: #23272b;
-      transform: scale(1.06) translateY(-2px) rotate(1deg);
-      box-shadow: 0 6px 24px #28359344;
-    }
-    .error {
+    .register-error {
       color: #ff6b6b;
       font-size: 1.04rem;
       margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
       text-align: center;
-    }
-    .success-message {
-      position: fixed;
-      top: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(90deg, #43ea7b 0%, #1de982 100%);
-      color: #23272b;
-      font-weight: bold;
-      font-size: 1.15rem;
-      padding: 0.9em 2.2em;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px #1de98244;
-      z-index: 9999;
-      opacity: 1;
-      transition: opacity 0.6s;
-      display: none;
-      letter-spacing: 0.5px;
-      animation: popInSuccess 0.7s cubic-bezier(.68,-0.55,.27,1.55);
-    }
-    @keyframes popInSuccess {
-      0% { opacity: 0; transform: translateX(-50%) scale(0.7) translateY(-30px); }
-      60% { opacity: 1; transform: translateX(-50%) scale(1.08) translateY(0); }
-      100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
-    }
-    .logo {
-      font-size: 2.3rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-      margin-bottom: 1.7rem;
-      color: #ff9800;
-      text-align: center;
-      text-shadow: 0 2px 8px #28359344;
-      opacity: 0;
-      transform: scale(0.8) rotate(-8deg);
-      animation: logoPop 1.1s cubic-bezier(.68,-0.55,.27,1.55) 0.5s forwards;
-    }
-    @keyframes logoPop {
-      60% {
-        opacity: 1;
-        transform: scale(1.15) rotate(4deg);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1) rotate(0deg);
-      }
-    }
-    h4 {
-      color: #ff9800;
-      text-align: center;
-      margin-bottom: 1.2rem;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: titleFadeIn 0.8s cubic-bezier(.68,-0.55,.27,1.55) 0.7s forwards;
-    }
-    @keyframes titleFadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    #chat-container {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(17,18,22,0.98);
-      z-index: 10;
-      padding: 0;
-      margin: 0;
-      transition: opacity 0.5s;
-    }
-    .chat-box {
-      width: 100%;
-      max-width: 420px;
-      background: #181a1b;
-      border-radius: 22px;
-      box-shadow: 0 4px 32px #000b;
-      padding: 1.7rem 1.2rem 1.2rem 1.2rem;
-      margin-bottom: 2.5rem;
-      display: flex;
-      flex-direction: column;
-      height: 70vh;
-    }
-    #chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 1rem;
-      background: #131417;
-      border-radius: 12px;
-      padding: 1rem;
-      font-size: 1.08rem;
-      color: #fff;
-      box-shadow: 0 2px 8px #28359322;
-    }
-    .chat-message {
-      margin-bottom: 0.7em;
-      word-break: break-word;
-    }
-    .chat-user {
-      color: #ff9800;
-      font-weight: bold;
-      margin-right: 0.4em;
-    }
-    .chat-text {
-      color: #fff;
-    }
-    #chat-form {
-      display: flex;
-      gap: 0.5em;
-    }
-    #chat-input {
-      flex: 1;
-      border-radius: 10px;
-      border: 1.5px solid #23272b;
-      background: #131417;
-      color: #fff;
-      padding: 0.6em 1em;
-      font-size: 1.08rem;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-    #chat-input:focus {
-      border-color: #ff9800;
-    }
-    #chat-send {
-      background: linear-gradient(90deg, #ff9800 0%, #283593 100%);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 0.6em 1.2em;
-      font-size: 1.08rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.18s;
-    }
-    #chat-send:hover {
-      background: linear-gradient(90deg, #ffa726 0%, #1a237e 100%);
-      transform: scale(1.06) translateY(-2px) rotate(-1deg);
-    }
-    #logout-btn {
-      margin-top:1.2em;
-      background:linear-gradient(90deg,#283593 0%,#ff9800 100%);
-      color:#fff;
-      font-weight:bold;
-      border:none;
-      border-radius:10px;
-      padding:0.6em 1.2em;
-      cursor:pointer;
-      transition:background 0.3s;
-    }
-    #logout-btn:hover {
-      background:linear-gradient(90deg,#ff9800 0%,#283593 100%);
-      color:#23272b;
+      min-height: 1.2em;
     }
     @media (max-width: 600px) {
-      .auth-card, .chat-box {
+      .register-card {
         max-width: 98vw;
         padding: 1.2rem 0.5rem 1.2rem 0.5rem;
         border-radius: 18px;
       }
-      .chat-box { height: 60vh; }
-      #chat-messages { font-size: 1rem; padding: 0.7rem; }
-      .chat-message { font-size: 1rem; padding: 0.6em 0.8em; }
+      .register-title { font-size: 1.4rem; }
     }
   </style>
 </head>
 <body>
-  <div class="auth-card" id="auth-container">
-    <div class="avatar"><span>🦉</span></div>
-    <div class="logo">top secret</div>
-    <div class="subtitle">Gizli topluluk için modern, güvenli giriş/kayıt</div>
-    <form id="login-form">
-      <h4>Giriş Yap</h4>
-      <div class="mb-3">
-        <input type="email" id="email" class="form-control" placeholder="E-posta" required />
-      </div>
-      <div class="mb-3">
-        <input type="password" id="password" class="form-control" placeholder="Şifre" required />
-      </div>
-      <button type="submit" class="btn btn-primary w-100 mb-2">Giriş Yap</button>
-      <button type="button" id="show-signup" class="btn btn-secondary w-100">Kayıt Ol</button>
-      <div class="error" id="error-message"></div>
-    </form>
-    <form id="signup-form" style="display:none;">
-      <h4>Kayıt Ol</h4>
-      <div class="mb-3">
-        <input type="email" id="signup-email" class="form-control" placeholder="E-posta" required />
-      </div>
-      <div class="mb-3">
-        <input type="password" id="signup-password" class="form-control" placeholder="Şifre" required />
-      </div>
-      <div class="g-recaptcha mb-3" data-sitekey="6Lf_04YrAAAAAK-EXMFw-1qXr0aj7Z2RzPCKvEBZ"></div>
-      <button type="submit" class="btn btn-primary w-100 mb-2">Kayıt Ol</button>
-      <button type="button" id="show-login" class="btn btn-secondary w-100">Giriş Yap</button>
-      <div class="error" id="signup-error-message"></div>
+  <div class="register-card">
+    <div class="register-title">Kayıt Ol</div>
+    <form class="register-form" id="register-form" autocomplete="off">
+      <input type="email" id="register-email" placeholder="E-posta" required />
+      <input type="password" id="register-password" placeholder="Şifre" required minlength="6" />
+      <button type="submit" class="register-btn">Kayıt Ol</button>
+      <div class="register-error" id="register-error"></div>
     </form>
   </div>
   <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyD39X1qF5C39TYzPcOhmo5lJVlRfU-dRvc",
-      authDomain: "top-secret-a5628.firebaseapp.com",
-      projectId: "top-secret-a5628",
-      storageBucket: "top-secret-a5628.appspot.com",
-      messagingSenderId: "854924115836",
-      appId: "1:854924115836:web:be1a865f48e7a868376ef9",
-      measurementId: "G-36WWQ06YRK"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const firestore = firebase.firestore();
-
-    // Giriş formu işlemleri
-    const loginForm = document.getElementById('login-form');
-    const errorMessage = document.getElementById('error-message');
-    // Custom başarı mesajı fonksiyonu
-    function showSuccessMessage(msg) {
-      let el = document.getElementById('success-message');
-      if (!el) {
-        el = document.createElement('div');
-        el.id = 'success-message';
-        el.className = 'success-message';
-        document.body.appendChild(el);
-      }
-      el.textContent = msg;
-      el.style.display = 'block';
-      setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 600);
-      }, 2200);
-    }
-
-    // Oturum kontrolü: Sayfa yüklenince girişli mi kontrol et
-    window.addEventListener('DOMContentLoaded', function() {
-      if (localStorage.getItem('isLoggedIn') === 'true') {
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('chat-container').style.display = 'flex';
-      }
-    });
-
-    loginForm.addEventListener('submit', function(e) {
+    // Demo: Form submitte hata göster (backend yoksa)
+    document.getElementById('register-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          showSuccessMessage('Giriş başarılı!');
-          document.getElementById('auth-container').style.display = 'none';
-          document.getElementById('chat-container').style.display = 'flex';
-          localStorage.setItem('isLoggedIn', 'true');
-        })
-        .catch(err => {
-          errorMessage.textContent = err.message;
-        });
-    });
-
-    // Kayıt formu işlemleri
-    const signupForm = document.getElementById('signup-form');
-    const showSignupBtn = document.getElementById('show-signup');
-    const showLoginBtn = document.getElementById('show-login');
-    const signupErrorMessage = document.getElementById('signup-error-message');
-
-    // Doğrulama kodu modalı oluştur (modern, dark theme)
-    function showCodeModal(expectedCode, email, password) {
-      let modal = document.getElementById('verify-modal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'verify-modal';
-        modal.innerHTML = `
-          <div class="verify-modal-bg"></div>
-          <div class="verify-modal-content dark-modal">
-            <h4>E-posta Doğrulama</h4>
-            <p>Mail adresinize gönderilen <span style="color:#ff9800;font-weight:bold">6 haneli kodu</span> girin:</p>
-            <input id="verify-code-input" type="text" maxlength="6" pattern="[0-9]{6}" style="font-size:1.3rem;text-align:center;letter-spacing:0.3em;padding:0.5em 1em;border-radius:8px;border:1.5px solid #7c3aed;width:80%;margin-bottom:1em;background:#181a1b;color:#fff;" autofocus />
-            <div id="verify-timer" style="margin-bottom:1em;color:#ff9800;font-weight:bold;font-size:1.1rem;">30</div>
-            <button id="verify-submit-btn" style="background:linear-gradient(90deg,#7c3aed 0%,#ff9800 100%);color:#fff;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;">Doğrula</button>
-            <button id="verify-cancel-btn" style="background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;margin-left:1em;">İptal</button>
-            <div id="verify-error" style="color:#ff6b6b;margin-top:0.7em;"></div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-      } else {
-        modal.style.display = 'block';
-      }
-      document.body.style.overflow = 'hidden';
-      let timer = 30;
-      const timerEl = modal.querySelector('#verify-timer');
-      const errorEl = modal.querySelector('#verify-error');
-      timerEl.textContent = timer;
-      errorEl.textContent = '';
-      modal.querySelector('#verify-code-input').value = '';
-      modal.querySelector('#verify-submit-btn').disabled = false;
-      let interval = setInterval(() => {
-        timer--;
-        timerEl.textContent = timer;
-        if (timer <= 0) {
-          clearInterval(interval);
-          errorEl.textContent = 'Süre doldu. Lütfen tekrar kayıt olun.';
-          modal.querySelector('#verify-submit-btn').disabled = true;
-        }
-      }, 1000);
-      modal.querySelector('#verify-submit-btn').onclick = function() {
-        const val = modal.querySelector('#verify-code-input').value.trim();
-        if (val === expectedCode.toString()) {
-          clearInterval(interval);
-          modal.style.display = 'none';
-          document.body.style.overflow = '';
-          // Kayıt işlemini tamamla
-          firebase.auth().createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-              // Firestore'a kullanıcıyı kaydet
-              const user = userCredential.user;
-              return firestore.collection("kullanicilar").doc(user.uid).set({
-                email: user.email,
-                kayitTarihi: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            })
-            .then(() => {
-              showSuccessMessage('Kayıt başarılı! Giriş yapabilirsiniz.');
-              signupForm.style.display = 'none';
-              loginForm.style.display = 'block';
-            })
-            .catch(err => {
-              signupErrorMessage.textContent = err.message;
-            });
-        } else {
-          errorEl.textContent = 'Kod yanlış!';
-        }
-      };
-      modal.querySelector('#verify-cancel-btn').onclick = function() {
-        clearInterval(interval);
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-      };
-    }
-
-    showSignupBtn.onclick = function() {
-      loginForm.style.display = 'none';
-      signupForm.style.display = 'block';
-    };
-    showLoginBtn.onclick = function() {
-      signupForm.style.display = 'none';
-      loginForm.style.display = 'block';
-    };
-
-    signupForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-      signupErrorMessage.textContent = '';
-      // reCAPTCHA kontrolü
-      var response = grecaptcha.getResponse();
-      if (!response) {
-        signupErrorMessage.textContent = "Lütfen robot olmadığınızı doğrulayın.";
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      // Burada backend entegrasyonu yapılabilir
+      if (!email.includes('@')) {
+        document.getElementById('register-error').textContent = 'Geçerli bir e-posta girin.';
         return;
       }
-      // Önce e-posta zaten kayıtlı mı kontrol et
-      firebase.auth().fetchSignInMethodsForEmail(email)
-        .then((methods) => {
-          if (methods && methods.length > 0) {
-            signupErrorMessage.textContent = 'Bu e-posta adresiyle zaten kayıt olunmuş. Lütfen giriş yapın veya başka bir e-posta deneyin.';
-            return;
-          }
-          // 6 haneli kod üret
-          const code = Math.floor(100000 + Math.random() * 900000);
-          // EmailJS ile kodu gönder
-          emailjs.send("service_a1d2neu", "template_3r4mr8b", {
-            to_email: email,
-            code: code
-          })
-          .then(function() {
-            showCodeModal(code, email, password);
-          }, function(error) {
-            signupErrorMessage.textContent = "Kod gönderilemedi: " + error.text;
-          });
-        })
-        .catch((err) => {
-          signupErrorMessage.textContent = 'Bir hata oluştu: ' + err.message;
-        });
-    });
-
-    // Mouse takip eden spotlight animasyonu
-    const card = document.querySelector('.auth-card');
-    card.addEventListener('mousemove', function(e) {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      card.style.setProperty('--spot-x', `${x}px`);
-      card.style.setProperty('--spot-y', `${y}px`);
-    });
-    card.addEventListener('mouseleave', function() {
-      card.style.setProperty('--spot-x', '50%');
-      card.style.setProperty('--spot-y', '50%');
-    });
-
-    // === Chat için Firebase Realtime Database ===
-    // Database SDK ekle
-    var script = document.createElement('script');
-    script.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js';
-    document.head.appendChild(script);
-    script.onload = function() {
-      const db = firebase.database();
-      // Chat arayüzü
-      const chatContainer = document.getElementById('chat-container');
-      const chatForm = document.getElementById('chat-form');
-      const chatInput = document.getElementById('chat-input');
-      const chatMessages = document.getElementById('chat-messages');
-      const logoutBtn = document.getElementById('logout-btn');
-      let username = localStorage.getItem('chat-username');
-      function askUsername() {
-        username = prompt('Kullanıcı adınızı girin:');
-        if (username && username.trim().length > 0) {
-          localStorage.setItem('chat-username', username);
-        } else {
-          askUsername();
-        }
+      if (password.length < 6) {
+        document.getElementById('register-error').textContent = 'Şifre en az 6 karakter olmalı.';
+        return;
       }
-      if (!username) askUsername();
-      // Mesaj gönderme
-      chatForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const text = chatInput.value.trim();
-        if (!text) return;
-        db.ref('messages').push({
-          user: username,
-          text: text,
-          time: Date.now()
-        });
-        chatInput.value = '';
-      });
-      // Mesajları dinle ve ekrana yaz
-      db.ref('messages').limitToLast(50).on('child_added', function(snapshot) {
-        const msg = snapshot.val();
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'chat-message';
-        msgDiv.innerHTML = `<span class="chat-user">${msg.user}:</span> <span class="chat-text">${msg.text}</span>`;
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      });
-      // Çıkış butonu
-      if (logoutBtn) {
-        logoutBtn.onclick = function() {
-          localStorage.removeItem('isLoggedIn');
-          // auth.signOut() ile Firebase oturumunu da kapat
-          firebase.auth().signOut().then(() => {
-            document.getElementById('chat-container').style.display = 'none';
-            document.getElementById('auth-container').style.display = 'block';
-            showSuccessMessage('Çıkış yapıldı.');
-          });
-        };
-      }
-    };
+      document.getElementById('register-error').textContent = 'Kayıt başarılı! (Demo)';
+    });
   </script>
-  <style>
-    /* Doğrulama kodu modalı (modern dark theme) */
-    #verify-modal { position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;display:block; }
-    .verify-modal-bg { position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.92);z-index:1; }
-    .verify-modal-content.dark-modal { position:relative;z-index:2;background:#181a1b;border-radius:18px;box-shadow:0 4px 32px #7c3aed44;padding:2.2rem 2rem 1.5rem 2rem;max-width:340px;margin:8vh auto 0 auto;text-align:center; }
-    .verify-modal-content.dark-modal h4 { color:#ff9800;font-size:1.3rem;margin-bottom:0.7em;font-weight:700; }
-    .verify-modal-content.dark-modal p { color:#fff;font-size:1.08rem;margin-bottom:1em; }
-    #verify-code-input { letter-spacing:0.3em;background:#181a1b;color:#fff;border:1.5px solid #7c3aed; }
-    #verify-timer { color:#ff9800;font-weight:bold;font-size:1.1rem; }
-    #verify-error { color:#ff6b6b;margin-top:0.7em; }
-    #verify-submit-btn, #verify-cancel-btn { transition:background 0.2s, color 0.2s; }
-    #verify-submit-btn:disabled { background:#444 !important; color:#bbb !important; cursor:not-allowed; }
-  </style>
-  <!-- Bootstrap 5 JS (isteğe bağlı) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- EmailJS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script>
-    (function(){
-      emailjs.init("YOUR_PUBLIC_KEY"); // Buraya kendi Public Key'ini yaz
-    })();
-  </script>
-  <!-- Chat kutusu arayüzü -->
-  <div id="chat-container">
-    <div class="chat-box">
-      <div id="chat-messages"></div>
-      <form id="chat-form" autocomplete="off">
-        <input id="chat-input" type="text" placeholder="Mesajınızı yazın..." maxlength="300" required />
-        <button id="chat-send" type="submit">Gönder</button>
-      </form>
-      <button id="logout-btn" style="margin-top:1.2em; background:linear-gradient(90deg,#283593 0%,#ff9800 100%);color:#fff;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;transition:background 0.3s;">Çıkış Yap</button>
-    </div>
-  </div>
 </body>
 </html> 
