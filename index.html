@@ -259,6 +259,12 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init("YOUR_PUBLIC_KEY"); // Buraya kendi Public Key'ini yaz
+    })();
+  </script>
   <script>
     // Firebase config
     const firebaseConfig = {
@@ -321,17 +327,86 @@
       const successDiv = document.getElementById('signup-success');
       errorDiv.textContent = '';
       successDiv.textContent = '';
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          successDiv.textContent = 'Kayıt başarılı! Şimdi giriş yapabilirsin.';
-          setTimeout(() => {
-            showLoginBtn.click();
-          }, 1200);
-        })
-        .catch(err => {
-          errorDiv.textContent = err.message;
-        });
+      // 6 haneli kod üret
+      const code = Math.floor(100000 + Math.random() * 900000);
+      // EmailJS ile kodu gönder
+      emailjs.send("service_a1d2neu", "template_3r4mr8b", {
+        to_email: email,
+        code: code
+      })
+      .then(function() {
+        showCodeModal(code, email, password);
+      }, function(error) {
+        errorDiv.textContent = "Kod gönderilemedi: " + error.text;
+      });
     });
+
+    // Doğrulama kodu modalı oluştur (modern, dark theme)
+    function showCodeModal(expectedCode, email, password) {
+      let modal = document.getElementById('verify-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'verify-modal';
+        modal.innerHTML = `
+          <div class="verify-modal-bg"></div>
+          <div class="verify-modal-content dark-modal">
+            <h4>E-posta Doğrulama</h4>
+            <p>Mail adresinize gönderilen <span style=\"color:#ff9800;font-weight:bold\">6 haneli kodu</span> girin:</p>
+            <input id="verify-code-input" type="text" maxlength="6" pattern="[0-9]{6}" style="font-size:1.3rem;text-align:center;letter-spacing:0.3em;padding:0.5em 1em;border-radius:8px;border:1.5px solid #7c3aed;width:80%;margin-bottom:1em;background:#181a1b;color:#fff;" autofocus />
+            <div id="verify-timer" style="margin-bottom:1em;color:#ff9800;font-weight:bold;font-size:1.1rem;">30</div>
+            <button id="verify-submit-btn" style="background:linear-gradient(90deg,#7c3aed 0%,#ff9800 100%);color:#fff;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;">Doğrula</button>
+            <button id="verify-cancel-btn" style="background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;margin-left:1em;">İptal</button>
+            <div id="verify-error" style="color:#ff6b6b;margin-top:0.7em;"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } else {
+        modal.style.display = 'block';
+      }
+      document.body.style.overflow = 'hidden';
+      let timer = 30;
+      const timerEl = modal.querySelector('#verify-timer');
+      const errorEl = modal.querySelector('#verify-error');
+      timerEl.textContent = timer;
+      errorEl.textContent = '';
+      modal.querySelector('#verify-code-input').value = '';
+      modal.querySelector('#verify-submit-btn').disabled = false;
+      let interval = setInterval(() => {
+        timer--;
+        timerEl.textContent = timer;
+        if (timer <= 0) {
+          clearInterval(interval);
+          errorEl.textContent = 'Süre doldu. Lütfen tekrar kayıt olun.';
+          modal.querySelector('#verify-submit-btn').disabled = true;
+        }
+      }, 1000);
+      modal.querySelector('#verify-submit-btn').onclick = function() {
+        const val = modal.querySelector('#verify-code-input').value.trim();
+        if (val === expectedCode.toString()) {
+          clearInterval(interval);
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+          // Kayıt işlemini tamamla
+          firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then(() => {
+              document.getElementById('signup-success').textContent = 'Kayıt başarılı! Şimdi giriş yapabilirsin.';
+              setTimeout(() => {
+                document.getElementById('show-login').click();
+              }, 1200);
+            })
+            .catch(err => {
+              document.getElementById('signup-error').textContent = err.message;
+            });
+        } else {
+          errorEl.textContent = 'Kod yanlış!';
+        }
+      };
+      modal.querySelector('#verify-cancel-btn').onclick = function() {
+        clearInterval(interval);
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      };
+    }
 
     // Oturum kontrolü: Sayfa yüklenince girişli mi kontrol et
     auth.onAuthStateChanged(function(user) {
