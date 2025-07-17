@@ -184,6 +184,7 @@
   </style>
 </head>
 <body>
+  <canvas id="snake-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;"></canvas>
   <div class="auth-card" id="auth-container">
     <div class="logo">top secret</div>
     <form id="login-form">
@@ -298,6 +299,78 @@
         Input.mouse.right = true;
       }
     });
+
+    // === Mouse'u takip eden segmentli yılan (iskelet) animasyonu ===
+    const canvas = document.getElementById('snake-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    function resizeCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Yılan parametreleri
+    const SEGMENTS = 30;
+    const LENGTH = 18;
+    const snake = [];
+    for (let i = 0; i < SEGMENTS; i++) {
+      snake.push({ x: width/2, y: height/2, angle: 0 });
+    }
+    let mouse = { x: width/2, y: height/2 };
+    document.addEventListener('mousemove', e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function animateSnake() {
+      // Baş segment mouse'a yaklaşır
+      const head = snake[0];
+      const dx = mouse.x - head.x;
+      const dy = mouse.y - head.y;
+      head.angle = Math.atan2(dy, dx);
+      head.x += Math.cos(head.angle) * 6;
+      head.y += Math.sin(head.angle) * 6;
+      // Diğer segmentler bir öncekini takip eder
+      for (let i = 1; i < SEGMENTS; i++) {
+        const prev = snake[i-1];
+        const seg = snake[i];
+        const tx = prev.x - seg.x;
+        const ty = prev.y - seg.y;
+        const dist = Math.sqrt(tx*tx + ty*ty);
+        const angle = Math.atan2(ty, tx);
+        if (dist > LENGTH) {
+          seg.x += Math.cos(angle) * (dist - LENGTH);
+          seg.y += Math.sin(angle) * (dist - LENGTH);
+        }
+        seg.angle = angle;
+      }
+      // Çizim
+      ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(snake[0].x, snake[0].y);
+      for (let i = 1; i < SEGMENTS; i++) {
+        ctx.lineTo(snake[i].x, snake[i].y);
+      }
+      ctx.stroke();
+      // Segment eklemleri
+      for (let i = 0; i < SEGMENTS; i++) {
+        ctx.beginPath();
+        ctx.arc(snake[i].x, snake[i].y, 3, 0, Math.PI*2);
+        ctx.fillStyle = i === 0 ? '#ff9800' : '#fff';
+        ctx.fill();
+      }
+      ctx.restore();
+      requestAnimationFrame(animateSnake);
+    }
+    animateSnake();
   </script>
   <!-- Bootstrap 5 JS (isteğe bağlı) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
