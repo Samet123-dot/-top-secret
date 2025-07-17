@@ -56,6 +56,8 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Firestore SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="auth-card" id="auth-container">
@@ -88,6 +90,13 @@
     <div id="main-content">
         <h1 class="logo">top secret</h1>
         <p>top secret</p>
+        <div id="chat-room" class="mt-4">
+            <div id="messages" style="height:250px; overflow-y:auto; background:#23272b; border-radius:8px; padding:1rem; margin-bottom:1rem; border:1px solid #333;"></div>
+            <form id="chat-form" class="d-flex gap-2">
+                <input type="text" id="chat-input" class="form-control" placeholder="Mesajınızı yazın..." required />
+                <button type="submit" class="btn btn-primary">Gönder</button>
+            </form>
+        </div>
         <button onclick="logout()" class="btn btn-danger mt-3">Çıkış Yap</button>
     </div>
     <script>
@@ -164,6 +173,53 @@
           .catch(err => {
             signupErrorMessage.textContent = err.message;
           });
+      });
+
+      // Firestore başlat
+      const db = firebase.firestore();
+      const chatForm = document.getElementById('chat-form');
+      const chatInput = document.getElementById('chat-input');
+      const messagesDiv = document.getElementById('messages');
+
+      // Mesajları anlık dinle ve ekrana yaz
+      function listenForMessages() {
+        db.collection('messages').orderBy('timestamp').onSnapshot(snapshot => {
+          messagesDiv.innerHTML = '';
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const msgDiv = document.createElement('div');
+            msgDiv.innerHTML = `<b>${data.user}:</b> ${data.text}`;
+            messagesDiv.appendChild(msgDiv);
+          });
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+      }
+
+      // Mesaj gönder
+      if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const user = auth.currentUser ? auth.currentUser.email : 'Anonim';
+          const text = chatInput.value;
+          db.collection('messages').add({
+            user,
+            text,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          chatInput.value = '';
+        });
+      }
+
+      // Giriş yaptıktan sonra sohbeti başlat
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          document.getElementById('auth-container').style.display = 'none';
+          document.getElementById('main-content').style.display = 'block';
+          listenForMessages();
+        } else {
+          document.getElementById('auth-container').style.display = 'block';
+          document.getElementById('main-content').style.display = 'none';
+        }
       });
     </script>
     <!-- Bootstrap 5 JS (isteğe bağlı) -->
