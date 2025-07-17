@@ -381,7 +381,7 @@
     const showLoginBtn = document.getElementById('show-login');
     const signupErrorMessage = document.getElementById('signup-error-message');
 
-    // Doğrulama kodu modalı oluştur
+    // Doğrulama kodu modalı oluştur (modern, dark theme)
     function showCodeModal(expectedCode, email, password) {
       let modal = document.getElementById('verify-modal');
       if (!modal) {
@@ -389,12 +389,13 @@
         modal.id = 'verify-modal';
         modal.innerHTML = `
           <div class="verify-modal-bg"></div>
-          <div class="verify-modal-content">
+          <div class="verify-modal-content dark-modal">
             <h4>E-posta Doğrulama</h4>
-            <p>Mail adresinize gönderilen 6 haneli kodu girin:</p>
-            <input id="verify-code-input" type="text" maxlength="6" pattern="[0-9]{6}" style="font-size:1.3rem;text-align:center;letter-spacing:0.3em;padding:0.5em 1em;border-radius:8px;border:1px solid #ccc;width:80%;margin-bottom:1em;" autofocus />
+            <p>Mail adresinize gönderilen <span style="color:#ff9800;font-weight:bold">6 haneli kodu</span> girin:</p>
+            <input id="verify-code-input" type="text" maxlength="6" pattern="[0-9]{6}" style="font-size:1.3rem;text-align:center;letter-spacing:0.3em;padding:0.5em 1em;border-radius:8px;border:1.5px solid #7c3aed;width:80%;margin-bottom:1em;background:#181a1b;color:#fff;" autofocus />
             <div id="verify-timer" style="margin-bottom:1em;color:#ff9800;font-weight:bold;font-size:1.1rem;">30</div>
-            <button id="verify-submit-btn" style="background:#43ea7b;color:#23272b;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;">Doğrula</button>
+            <button id="verify-submit-btn" style="background:linear-gradient(90deg,#7c3aed 0%,#ff9800 100%);color:#fff;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;">Doğrula</button>
+            <button id="verify-cancel-btn" style="background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;margin-left:1em;">İptal</button>
             <div id="verify-error" style="color:#ff6b6b;margin-top:0.7em;"></div>
           </div>
         `;
@@ -404,21 +405,23 @@
       }
       document.body.style.overflow = 'hidden';
       let timer = 30;
-      const timerEl = document.getElementById('verify-timer');
-      const errorEl = document.getElementById('verify-error');
+      const timerEl = modal.querySelector('#verify-timer');
+      const errorEl = modal.querySelector('#verify-error');
       timerEl.textContent = timer;
       errorEl.textContent = '';
+      modal.querySelector('#verify-code-input').value = '';
+      modal.querySelector('#verify-submit-btn').disabled = false;
       let interval = setInterval(() => {
         timer--;
         timerEl.textContent = timer;
         if (timer <= 0) {
           clearInterval(interval);
           errorEl.textContent = 'Süre doldu. Lütfen tekrar kayıt olun.';
-          document.getElementById('verify-submit-btn').disabled = true;
+          modal.querySelector('#verify-submit-btn').disabled = true;
         }
       }, 1000);
-      document.getElementById('verify-submit-btn').onclick = function() {
-        const val = document.getElementById('verify-code-input').value.trim();
+      modal.querySelector('#verify-submit-btn').onclick = function() {
+        const val = modal.querySelector('#verify-code-input').value.trim();
         if (val === expectedCode.toString()) {
           clearInterval(interval);
           modal.style.display = 'none';
@@ -444,6 +447,11 @@
         } else {
           errorEl.textContent = 'Kod yanlış!';
         }
+      };
+      modal.querySelector('#verify-cancel-btn').onclick = function() {
+        clearInterval(interval);
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
       };
     }
 
@@ -565,15 +573,17 @@
     };
   </script>
   <style>
-    /* Doğrulama kodu modalı */
+    /* Doğrulama kodu modalı (modern dark theme) */
     #verify-modal { position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;display:block; }
-    .verify-modal-bg { position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.85);z-index:1; }
-    .verify-modal-content { position:relative;z-index:2;background:#fff;border-radius:18px;box-shadow:0 4px 32px #0008;padding:2.2rem 2rem 1.5rem 2rem;max-width:340px;margin:8vh auto 0 auto;text-align:center; }
-    .verify-modal-content h4 { color:#23272b;font-size:1.3rem;margin-bottom:0.7em;font-weight:700; }
-    .verify-modal-content p { color:#444;font-size:1.08rem;margin-bottom:1em; }
-    #verify-code-input { letter-spacing:0.3em; }
+    .verify-modal-bg { position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.92);z-index:1; }
+    .verify-modal-content.dark-modal { position:relative;z-index:2;background:#181a1b;border-radius:18px;box-shadow:0 4px 32px #7c3aed44;padding:2.2rem 2rem 1.5rem 2rem;max-width:340px;margin:8vh auto 0 auto;text-align:center; }
+    .verify-modal-content.dark-modal h4 { color:#ff9800;font-size:1.3rem;margin-bottom:0.7em;font-weight:700; }
+    .verify-modal-content.dark-modal p { color:#fff;font-size:1.08rem;margin-bottom:1em; }
+    #verify-code-input { letter-spacing:0.3em;background:#181a1b;color:#fff;border:1.5px solid #7c3aed; }
     #verify-timer { color:#ff9800;font-weight:bold;font-size:1.1rem; }
     #verify-error { color:#ff6b6b;margin-top:0.7em; }
+    #verify-submit-btn, #verify-cancel-btn { transition:background 0.2s, color 0.2s; }
+    #verify-submit-btn:disabled { background:#444 !important; color:#bbb !important; cursor:not-allowed; }
   </style>
   <!-- Bootstrap 5 JS (isteğe bağlı) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
