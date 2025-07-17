@@ -256,7 +256,23 @@
       <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
     </div>
   </div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD39X1qF5C39TYzPcOhmo5lJVlRfU-dRvc",
+      authDomain: "top-secret-a5628.firebaseapp.com",
+      projectId: "top-secret-a5628",
+      storageBucket: "top-secret-a5628.appspot.com",
+      messagingSenderId: "854924115836",
+      appId: "1:854924115836:web:be1a865f48e7a868376ef9",
+      measurementId: "G-36WWQ06YRK"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
     // Formlar arası geçiş
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
@@ -273,30 +289,30 @@
       loginForm.style.display = 'flex';
       formTitle.textContent = 'Giriş Yap';
     };
-    // Demo giriş
+
+    // Giriş
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       const errorDiv = document.getElementById('login-error');
       errorDiv.textContent = '';
-      if (!email.includes('@')) {
-        errorDiv.textContent = 'Geçerli bir e-posta girin.';
-        return;
-      }
-      if (password.length < 6) {
-        errorDiv.textContent = 'Şifre en az 6 karakter olmalı.';
-        return;
-      }
-      // Demo: Her giriş başarılı
-      errorDiv.style.color = '#43ea7b';
-      errorDiv.textContent = 'Giriş başarılı! (Demo)';
-      setTimeout(() => {
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('chat-container').style.display = 'flex';
-      }, 700);
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          errorDiv.style.color = '#43ea7b';
+          errorDiv.textContent = 'Giriş başarılı!';
+          setTimeout(() => {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'flex';
+          }, 700);
+        })
+        .catch(err => {
+          errorDiv.style.color = '#ff6b6b';
+          errorDiv.textContent = err.message;
+        });
     });
-    // Demo kayıt
+
+    // Kayıt
     signupForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const email = document.getElementById('signup-email').value;
@@ -305,20 +321,33 @@
       const successDiv = document.getElementById('signup-success');
       errorDiv.textContent = '';
       successDiv.textContent = '';
-      if (!email.includes('@')) {
-        errorDiv.textContent = 'Geçerli bir e-posta girin.';
-        return;
-      }
-      if (password.length < 6) {
-        errorDiv.textContent = 'Şifre en az 6 karakter olmalı.';
-        return;
-      }
-      // Demo: Her kayıt başarılı
-      successDiv.textContent = 'Kayıt başarılı! Şimdi giriş yapabilirsin.';
-      setTimeout(() => {
-        showLoginBtn.click();
-      }, 1200);
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          successDiv.textContent = 'Kayıt başarılı! Şimdi giriş yapabilirsin.';
+          setTimeout(() => {
+            showLoginBtn.click();
+          }, 1200);
+        })
+        .catch(err => {
+          errorDiv.textContent = err.message;
+        });
     });
+
+    // Oturum kontrolü: Sayfa yüklenince girişli mi kontrol et
+    auth.onAuthStateChanged(function(user) {
+      if (user) {
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+      } else {
+        document.getElementById('chat-container').style.display = 'none';
+        document.getElementById('auth-container').style.display = 'block';
+      }
+    });
+
+    // Çıkış
+    document.getElementById('logout-btn').onclick = function() {
+      auth.signOut();
+    };
   </script>
   <script>
     // Chat demo JS
