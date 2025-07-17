@@ -58,6 +58,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <!-- Firestore SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
     <div class="auth-card" id="auth-container">
@@ -175,37 +177,45 @@
           });
       });
 
-      // Firestore başlat
-      const db = firebase.firestore();
+      // Supabase chat entegrasyonu
+      const SUPABASE_URL = "https://lorrpkirfjtytcbemebi.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvcnJwa2lyZmp0eXRjYmVtZWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NjExMjEsImV4cCI6MjA2ODMzNzEyMX0.Pagtk7CQFc11eRoOzKIGREcX0wnBonqwcBr9_3jj40A";
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
       const chatForm = document.getElementById('chat-form');
       const chatInput = document.getElementById('chat-input');
       const messagesDiv = document.getElementById('messages');
 
-      // Mesajları anlık dinle ve ekrana yaz
-      function listenForMessages() {
-        db.collection('messages').orderBy('timestamp').onSnapshot(snapshot => {
+      // Mesajları çek ve ekrana yaz
+      async function loadMessages() {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .order('created_at', { ascending: true });
+        if (!error && data) {
           messagesDiv.innerHTML = '';
-          snapshot.forEach(doc => {
-            const data = doc.data();
+          data.forEach(msg => {
             const msgDiv = document.createElement('div');
-            msgDiv.innerHTML = `<b>${data.user}:</b> ${data.text}`;
+            msgDiv.innerHTML = `<b>${msg.user}:</b> ${msg.text}`;
             messagesDiv.appendChild(msgDiv);
           });
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        });
+        }
       }
+
+      // Gerçek zamanlı dinleme
+      supabase.channel('messages-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, loadMessages)
+        .subscribe();
 
       // Mesaj gönder
       if (chatForm) {
-        chatForm.addEventListener('submit', function(e) {
+        chatForm.addEventListener('submit', async function(e) {
           e.preventDefault();
           const user = auth.currentUser ? auth.currentUser.email : 'Anonim';
           const text = chatInput.value;
-          db.collection('messages').add({
-            user,
-            text,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
+          if (text.trim() === '') return;
+          await supabase.from('messages').insert([{ user, text }]);
           chatInput.value = '';
         });
       }
@@ -215,7 +225,7 @@
         if (user) {
           document.getElementById('auth-container').style.display = 'none';
           document.getElementById('main-content').style.display = 'block';
-          listenForMessages();
+          loadMessages();
         } else {
           document.getElementById('auth-container').style.display = 'block';
           document.getElementById('main-content').style.display = 'none';
