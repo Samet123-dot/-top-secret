@@ -8,6 +8,8 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <!-- Firestore SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
     body {
       background: #181a1b;
@@ -225,6 +227,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const firestore = firebase.firestore();
 
     // Giriş formu işlemleri
     const loginForm = document.getElementById('login-form');
@@ -320,6 +323,14 @@
           document.body.style.overflow = '';
           // Kayıt işlemini tamamla
           firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+              // Firestore'a kullanıcıyı kaydet
+              const user = userCredential.user;
+              return firestore.collection("kullanicilar").doc(user.uid).set({
+                email: user.email,
+                kayitTarihi: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            })
             .then(() => {
               showSuccessMessage('Kayıt başarılı! Giriş yapabilirsiniz.');
               signupForm.style.display = 'none';
