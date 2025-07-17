@@ -53,7 +53,16 @@
         <input type="email" id="email" placeholder="E-posta" required />
         <input type="password" id="password" placeholder="Şifre" required />
         <button type="submit">Giriş Yap</button>
+        <button type="button" id="show-signup">Kayıt Ol</button>
         <div class="error" id="error-message"></div>
+    </form>
+    <form id="signup-form" style="display:none;">
+        <h2>Kayıt Ol</h2>
+        <input type="email" id="signup-email" placeholder="E-posta" required />
+        <input type="password" id="signup-password" placeholder="Şifre" required />
+        <button type="submit">Kayıt Ol</button>
+        <button type="button" id="show-login">Giriş Yap</button>
+        <div class="error" id="signup-error-message"></div>
     </form>
     <div id="main-content">
         <h1>top secret</h1>
@@ -106,6 +115,34 @@
       function logout() {
         auth.signOut();
       }
+
+      const signupForm = document.getElementById('signup-form');
+      const showSignupBtn = document.getElementById('show-signup');
+      const showLoginBtn = document.getElementById('show-login');
+      const signupErrorMessage = document.getElementById('signup-error-message');
+
+      showSignupBtn.onclick = function() {
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'flex';
+      };
+      showLoginBtn.onclick = function() {
+        signupForm.style.display = 'none';
+        loginForm.style.display = 'flex';
+      };
+
+      signupForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => {
+            signupForm.style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+          })
+          .catch(err => {
+            signupErrorMessage.textContent = err.message;
+          });
+      });
     </script>
 </body>
 </html> 
