@@ -59,7 +59,7 @@
     <!-- Firestore SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <!-- Supabase JS -->
-    <!-- (Supabase script kaldırıldı) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
     <div class="auth-card" id="auth-container">
@@ -177,21 +177,62 @@
           });
       });
 
-      // Supabase chat entegrasyonu ve ilgili kodlar kaldırıldı
+      // Supabase chat entegrasyonu
+      const SUPABASE_URL = "https://lorrpkirfjtytcbemebi.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvcnJwa2lyZmp0eXRjYmVtZWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NjExMjEsImV4cCI6MjA2ODMzNzEyMX0.Pagtk7CQFc11eRoOzKIGREcX0wnBonqwcBr9_3jj40A";
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const chatForm = document.getElementById('chat-form');
+      const chatInput = document.getElementById('chat-input');
+      const messagesDiv = document.getElementById('messages');
+
+      // Mesajları çek ve ekrana yaz
+      async function loadMessages() {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .order('created_at', { ascending: true });
+        if (!error && data) {
+          messagesDiv.innerHTML = '';
+          data.forEach(msg => {
+            const msgDiv = document.createElement('div');
+            msgDiv.innerHTML = `<b>${msg.user}:</b> ${msg.text}`;
+            messagesDiv.appendChild(msgDiv);
+          });
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+      }
+
+      // Gerçek zamanlı dinleme
+      supabase.channel('messages-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, loadMessages)
+        .subscribe();
+
+      // Mesaj gönder
+      if (chatForm) {
+        chatForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          const user = auth.currentUser ? auth.currentUser.email : 'Anonim';
+          const text = chatInput.value;
+          if (text.trim() === '') return;
+          await supabase.from('messages').insert([{ user, text }]);
+          chatInput.value = '';
+        });
+      }
+
+      // Giriş yaptıktan sonra sohbeti başlat
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          document.getElementById('auth-container').style.display = 'none';
+          document.getElementById('main-content').style.display = 'block';
+          loadMessages();
+        } else {
+          document.getElementById('auth-container').style.display = 'block';
+          document.getElementById('main-content').style.display = 'none';
+        }
+      });
     </script>
-    <!--Start of Tawk.to Script-->
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/68791078f974b8191a0e4bd9/1j0cegm1k';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
+    <!-- Tawk.to widget kodu kaldırıldı -->
     <!-- Bootstrap 5 JS (isteğe bağlı) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
