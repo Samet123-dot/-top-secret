@@ -2,67 +2,106 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Firebase Realtime Chat</title>
+  <title>Giriş / Kayıt</title>
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <style>
-    body { background: #181a1b; color: #fff; font-family: Arial; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-    .chat-container { background: #23272b; border-radius: 12px; box-shadow: 0 4px 32px #0008; padding: 2rem; width: 100%; max-width: 400px; }
-    #messages { height: 250px; overflow-y: auto; background: #181a1b; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #333; }
-    #chat-form { display: flex; gap: 8px; }
-    #chat-input { flex: 1; padding: 0.5rem; border-radius: 5px; border: none; background: #23272b; color: #fff; }
-    #chat-input:focus { outline: 2px solid #00c6fb; }
-    #send-btn { background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%); color: #fff; border: none; border-radius: 5px; padding: 0 1.2rem; font-weight: bold; cursor: pointer; }
-    .msg { margin-bottom: 8px; }
-    .msg b { color: #00c6fb; }
-    h1 { color: #00c6fb; text-align: center; margin-bottom: 1rem; }
+    body { background: #181a1b; color: #fff; font-family: Arial; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .auth-card { background: #23272b; border-radius: 16px; box-shadow: 0 4px 32px #0008; padding: 2.5rem 2rem 2rem 2rem; width: 100%; max-width: 370px; }
+    .form-control, .form-control:focus { background: #181a1b; color: #fff; border: 1px solid #444; }
+    .btn-primary { background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%); border: none; }
+    .btn-secondary { background: #444; border: none; }
+    .error { color: #ff6b6b; font-size: 1rem; margin-top: 0.5rem; }
+    .logo { font-size: 2.2rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 1.5rem; color: #00c6fb; text-align: center; }
   </style>
 </head>
 <body>
-  <div class="chat-container">
-    <h1>Firebase Chat</h1>
-    <div id="messages"></div>
-    <form id="chat-form" autocomplete="off">
-      <input type="text" id="chat-input" placeholder="Mesajınızı yazın..." required />
-      <button type="submit" id="send-btn">Gönder</button>
+  <div class="auth-card" id="auth-container">
+    <div class="logo">top secret</div>
+    <form id="login-form">
+      <h4 class="mb-3">Giriş Yap</h4>
+      <div class="mb-3">
+        <input type="email" id="email" class="form-control" placeholder="E-posta" required />
+      </div>
+      <div class="mb-3">
+        <input type="password" id="password" class="form-control" placeholder="Şifre" required />
+      </div>
+      <button type="submit" class="btn btn-primary w-100 mb-2">Giriş Yap</button>
+      <button type="button" id="show-signup" class="btn btn-secondary w-100">Kayıt Ol</button>
+      <div class="error" id="error-message"></div>
+    </form>
+    <form id="signup-form" style="display:none;">
+      <h4 class="mb-3">Kayıt Ol</h4>
+      <div class="mb-3">
+        <input type="email" id="signup-email" class="form-control" placeholder="E-posta" required />
+      </div>
+      <div class="mb-3">
+        <input type="password" id="signup-password" class="form-control" placeholder="Şifre" required />
+      </div>
+      <button type="submit" class="btn btn-primary w-100 mb-2">Kayıt Ol</button>
+      <button type="button" id="show-login" class="btn btn-secondary w-100">Giriş Yap</button>
+      <div class="error" id="signup-error-message"></div>
     </form>
   </div>
   <script>
     // Firebase config
-    var firebaseConfig = {
-      databaseURL: "https://top-secret-a5628-default-rtdb.firebaseio.com/"
+    const firebaseConfig = {
+      apiKey: "AIzaSyD39X1qF5C39TYzPcOhmo5lJVlRfU-dRvc",
+      authDomain: "top-secret-a5628.firebaseapp.com",
+      projectId: "top-secret-a5628",
+      storageBucket: "top-secret-a5628.appspot.com",
+      messagingSenderId: "854924115836",
+      appId: "1:854924115836:web:be1a865f48e7a868376ef9",
+      measurementId: "G-36WWQ06YRK"
     };
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    var db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-    // Mesajları dinle ve ekrana yaz
-    function addMessage(data) {
-      var messagesDiv = document.getElementById('messages');
-      var msgDiv = document.createElement('div');
-      msgDiv.className = 'msg';
-      msgDiv.innerHTML = `<b>${data.user}:</b> ${data.text}`;
-      messagesDiv.appendChild(msgDiv);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-    document.getElementById('messages').innerHTML = '';
-    db.ref('messages').off();
-    db.ref('messages').on('child_added', function(snapshot) {
-      var data = snapshot.val();
-      addMessage(data);
+    // Giriş formu işlemleri
+    const loginForm = document.getElementById('login-form');
+    const errorMessage = document.getElementById('error-message');
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          alert('Giriş başarılı!');
+        })
+        .catch(err => {
+          errorMessage.textContent = err.message;
+        });
     });
 
-    // Mesaj gönder
-    document.getElementById('chat-form').addEventListener('submit', function(e) {
+    // Kayıt formu işlemleri
+    const signupForm = document.getElementById('signup-form');
+    const showSignupBtn = document.getElementById('show-signup');
+    const showLoginBtn = document.getElementById('show-login');
+    const signupErrorMessage = document.getElementById('signup-error-message');
+
+    showSignupBtn.onclick = function() {
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'block';
+    };
+    showLoginBtn.onclick = function() {
+      signupForm.style.display = 'none';
+      loginForm.style.display = 'block';
+    };
+
+    signupForm.addEventListener('submit', function(e) {
       e.preventDefault();
-      var user = localStorage.getItem('chatUser') || prompt('Adınız (veya e-posta):');
-      if (!user) return;
-      localStorage.setItem('chatUser', user);
-      var text = document.getElementById('chat-input').value;
-      db.ref('messages').push({ user, text });
-      document.getElementById('chat-input').value = '';
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+          signupForm.style.display = 'none';
+          loginForm.style.display = 'block';
+        })
+        .catch(err => {
+          signupErrorMessage.textContent = err.message;
+        });
     });
   </script>
 </body>
