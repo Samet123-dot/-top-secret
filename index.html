@@ -1,239 +1,54 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>top secret</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: #181a1b;
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .auth-card {
-            background: #23272b;
-            border-radius: 16px;
-            box-shadow: 0 4px 32px #0008;
-            padding: 2.5rem 2rem 2rem 2rem;
-            width: 100%;
-            max-width: 370px;
-        }
-        .form-control, .form-control:focus {
-            background: #181a1b;
-            color: #fff;
-            border: 1px solid #444;
-        }
-        .btn-primary {
-            background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%);
-            border: none;
-        }
-        .btn-secondary {
-            background: #444;
-            border: none;
-        }
-        .error {
-            color: #ff6b6b;
-            font-size: 1rem;
-            margin-top: 0.5rem;
-        }
-        #main-content {
-            display: none;
-            text-align: center;
-        }
-        .logo {
-            font-size: 2.2rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 1.5rem;
-            color: #00c6fb;
-        }
-    </style>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <!-- Firestore SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Firebase Realtime Chat</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    body { background: #181a1b; color: #fff; font-family: Arial; }
+    #messages { height: 250px; overflow-y: auto; background: #23272b; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #333; }
+    #chat-form { display: flex; gap: 8px; }
+    #chat-input { flex: 1; }
+    .msg { margin-bottom: 8px; }
+    .msg b { color: #00c6fb; }
+  </style>
 </head>
 <body>
-    <div class="auth-card" id="auth-container">
-        <div class="logo">top secret</div>
-        <form id="login-form">
-            <h4 class="mb-3">Giriş Yap</h4>
-            <div class="mb-3">
-                <input type="email" id="email" class="form-control" placeholder="E-posta" required />
-            </div>
-            <div class="mb-3">
-                <input type="password" id="password" class="form-control" placeholder="Şifre" required />
-            </div>
-            <button type="submit" class="btn btn-primary w-100 mb-2">Giriş Yap</button>
-            <button type="button" id="show-signup" class="btn btn-secondary w-100">Kayıt Ol</button>
-            <div class="error" id="error-message"></div>
-        </form>
-        <form id="signup-form" style="display:none;">
-            <h4 class="mb-3">Kayıt Ol</h4>
-            <div class="mb-3">
-                <input type="email" id="signup-email" class="form-control" placeholder="E-posta" required />
-            </div>
-            <div class="mb-3">
-                <input type="password" id="signup-password" class="form-control" placeholder="Şifre" required />
-            </div>
-            <button type="submit" class="btn btn-primary w-100 mb-2">Kayıt Ol</button>
-            <button type="button" id="show-login" class="btn btn-secondary w-100">Giriş Yap</button>
-            <div class="error" id="signup-error-message"></div>
-        </form>
-    </div>
-    <div id="main-content">
-        <h1 class="logo">top secret</h1>
-        <p>top secret</p>
-        <div id="chat-room" class="mt-4">
-            <div id="messages" style="height:250px; overflow-y:auto; background:#23272b; border-radius:8px; padding:1rem; margin-bottom:1rem; border:1px solid #333;"></div>
-            <form id="chat-form" class="d-flex gap-2">
-                <input type="text" id="chat-input" class="form-control" placeholder="Mesajınızı yazın..." required />
-                <button type="submit" class="btn btn-primary">Gönder</button>
-            </form>
-        </div>
-        <button onclick="logout()" class="btn btn-danger mt-3">Çıkış Yap</button>
-    </div>
-    <script>
-      // Firebase config
-      const firebaseConfig = {
-        apiKey: "AIzaSyD39X1qF5C39TYzPcOhmo5lJVlRfU-dRvc",
-        authDomain: "top-secret-a5628.firebaseapp.com",
-        projectId: "top-secret-a5628",
-        storageBucket: "top-secret-a5628.appspot.com",
-        messagingSenderId: "854924115836",
-        appId: "1:854924115836:web:be1a865f48e7a868376ef9",
-        measurementId: "G-36WWQ06YRK"
-      };
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
+  <h1>Firebase Chat</h1>
+  <div id="messages"></div>
+  <form id="chat-form">
+    <input type="text" id="chat-input" placeholder="Mesajınızı yazın..." required />
+    <button type="submit">Gönder</button>
+  </form>
+  <script>
+    // Firebase config
+    var firebaseConfig = {
+      databaseURL: "https://top-secret-a5628-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
 
-      // Giriş formu işlemleri
-      const loginForm = document.getElementById('login-form');
-      const errorMessage = document.getElementById('error-message');
-      loginForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        auth.signInWithEmailAndPassword(email, password)
-          .then(() => {
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-          })
-          .catch(err => {
-            errorMessage.textContent = err.message;
-          });
-      });
+    // Mesajları dinle ve ekrana yaz
+    db.ref('messages').on('child_added', function(snapshot) {
+      var data = snapshot.val();
+      var messagesDiv = document.getElementById('messages');
+      var msgDiv = document.createElement('div');
+      msgDiv.className = 'msg';
+      msgDiv.innerHTML = `<b>${data.user}:</b> ${data.text}`;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
 
-      // Oturum kontrolü
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          document.getElementById('auth-container').style.display = 'none';
-          document.getElementById('main-content').style.display = 'block';
-        } else {
-          document.getElementById('auth-container').style.display = 'block';
-          document.getElementById('main-content').style.display = 'none';
-        }
-      });
-
-      // Çıkış fonksiyonu
-      function logout() {
-        auth.signOut();
-      }
-
-      // Kayıt formu işlemleri
-      const signupForm = document.getElementById('signup-form');
-      const showSignupBtn = document.getElementById('show-signup');
-      const showLoginBtn = document.getElementById('show-login');
-      const signupErrorMessage = document.getElementById('signup-error-message');
-
-      showSignupBtn.onclick = function() {
-        loginForm.style.display = 'none';
-        signupForm.style.display = 'block';
-      };
-      showLoginBtn.onclick = function() {
-        signupForm.style.display = 'none';
-        loginForm.style.display = 'block';
-      };
-
-      signupForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const email = document.getElementById('signup-email').value;
-        const password = document.getElementById('signup-password').value;
-        auth.createUserWithEmailAndPassword(email, password)
-          .then(() => {
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-          })
-          .catch(err => {
-            signupErrorMessage.textContent = err.message;
-          });
-      });
-
-      // Supabase chat entegrasyonu
-      const SUPABASE_URL = "https://lorrpkirfjtytcbemebi.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvcnJwa2lyZmp0eXRjYmVtZWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NjExMjEsImV4cCI6MjA2ODMzNzEyMX0.Pagtk7CQFc11eRoOzKIGREcX0wnBonqwcBr9_3jj40A";
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      const chatForm = document.getElementById('chat-form');
-      const chatInput = document.getElementById('chat-input');
-      const messagesDiv = document.getElementById('messages');
-
-      // Mesajları çek ve ekrana yaz
-      async function loadMessages() {
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .order('created_at', { ascending: true });
-        if (!error && data) {
-          messagesDiv.innerHTML = '';
-          data.forEach(msg => {
-            const msgDiv = document.createElement('div');
-            msgDiv.innerHTML = `<b>${msg.user}:</b> ${msg.text}`;
-            messagesDiv.appendChild(msgDiv);
-          });
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-      }
-
-      // Gerçek zamanlı dinleme
-      supabase.channel('messages-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, loadMessages)
-        .subscribe();
-
-      // Mesaj gönder
-      if (chatForm) {
-        chatForm.addEventListener('submit', async function(e) {
-          e.preventDefault();
-          const user = auth.currentUser ? auth.currentUser.email : 'Anonim';
-          const text = chatInput.value;
-          if (text.trim() === '') return;
-          await supabase.from('messages').insert([{ user, text }]);
-          chatInput.value = '';
-        });
-      }
-
-      // Giriş yaptıktan sonra sohbeti başlat
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          document.getElementById('auth-container').style.display = 'none';
-          document.getElementById('main-content').style.display = 'block';
-          loadMessages();
-        } else {
-          document.getElementById('auth-container').style.display = 'block';
-          document.getElementById('main-content').style.display = 'none';
-        }
-      });
-    </script>
-    <!-- Tawk.to widget kodu kaldırıldı -->
-    <!-- Bootstrap 5 JS (isteğe bağlı) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    // Mesaj gönder
+    document.getElementById('chat-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var user = prompt('Adınız (veya e-posta):');
+      var text = document.getElementById('chat-input').value;
+      db.ref('messages').push({ user, text });
+      document.getElementById('chat-input').value = '';
+    });
+  </script>
 </body>
 </html> 
