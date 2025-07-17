@@ -12,7 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
     body {
-      background: #181a1b;
+      background: linear-gradient(135deg, #181a1b 0%, #283593 40%, #ff9800 100%);
       color: #fff;
       min-height: 100vh;
       display: flex;
@@ -20,6 +20,12 @@
       justify-content: center;
       overflow: hidden;
       position: relative;
+      animation: bgMove 18s ease-in-out infinite alternate;
+    }
+    @keyframes bgMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
     /* Arka plan animasyonlu gradient */
     body::before {
@@ -27,13 +33,16 @@
       position: fixed;
       z-index: 0;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(120deg, #ff9800 0%, #283593 100%);
-      opacity: 0.18;
-      animation: bgRotate 12s linear infinite;
+      background: radial-gradient(circle at 20% 30%, #ff980055 0%, transparent 60%),
+                  radial-gradient(circle at 80% 70%, #28359355 0%, transparent 60%),
+                  linear-gradient(120deg, #ff9800 0%, #283593 100%);
+      opacity: 0.22;
+      animation: bgRotate 18s linear infinite;
     }
     @keyframes bgRotate {
-      0% { filter: hue-rotate(0deg); }
-      100% { filter: hue-rotate(360deg); }
+      0% { filter: hue-rotate(0deg) blur(0px); }
+      50% { filter: hue-rotate(180deg) blur(2px); }
+      100% { filter: hue-rotate(360deg) blur(0px); }
     }
     /* Spotlight için kartın arka planı */
     .auth-card {
@@ -419,115 +428,136 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Yılan parametreleri
-    const SEGMENTS = 30;
-    const LENGTH = 18;
-    const snake = [];
-    for (let i = 0; i < SEGMENTS; i++) {
-      snake.push({ x: width/2, y: height/2, angle: 0 });
-    }
-    let dragonTarget = { x: width/2, y: height/2 };
-    let changeTargetTimer = 0;
-    function randomTarget() {
-      // Ekran kenarlarından biraz içeride rastgele bir hedef
-      const margin = 60;
+    // 2 EJDERHA
+    function createDragon(startX, startY, color1, color2) {
+      const SEGMENTS = 30;
+      const LENGTH = 18;
+      const snake = [];
+      for (let i = 0; i < SEGMENTS; i++) {
+        snake.push({ x: startX, y: startY, angle: 0 });
+      }
+      let dragonTarget = { x: startX, y: startY };
+      let changeTargetTimer = 0;
+      function randomTarget() {
+        const margin = 60;
+        return {
+          x: Math.random() * (width - 2*margin) + margin,
+          y: Math.random() * (height - 2*margin) + margin
+        };
+      }
       return {
-        x: Math.random() * (width - 2*margin) + margin,
-        y: Math.random() * (height - 2*margin) + margin
+        snake,
+        SEGMENTS,
+        LENGTH,
+        get head() { return snake[0]; },
+        color1,
+        color2,
+        dragonTarget,
+        changeTargetTimer,
+        randomTarget,
+        update() {
+          this.changeTargetTimer--;
+          const head = this.head;
+          const dx = this.dragonTarget.x - head.x;
+          const dy = this.dragonTarget.y - head.y;
+          const distToTarget = Math.sqrt(dx*dx + dy*dy);
+          if (this.changeTargetTimer <= 0 || distToTarget < 30) {
+            this.dragonTarget = this.randomTarget();
+            this.changeTargetTimer = 80 + Math.random() * 120;
+          }
+          head.angle = Math.atan2(dy, dx);
+          head.x += Math.cos(head.angle) * 6;
+          head.y += Math.sin(head.angle) * 6;
+          for (let i = 1; i < this.SEGMENTS; i++) {
+            const prev = this.snake[i-1];
+            const seg = this.snake[i];
+            const tx = prev.x - seg.x;
+            const ty = prev.y - seg.y;
+            const dist = Math.sqrt(tx*tx + ty*ty);
+            const angle = Math.atan2(ty, tx);
+            if (dist > this.LENGTH) {
+              seg.x += Math.cos(angle) * (dist - this.LENGTH);
+              seg.y += Math.sin(angle) * (dist - this.LENGTH);
+            }
+            seg.angle = angle;
+          }
+        },
+        draw(ctx) {
+          for (let i = this.SEGMENTS-1; i > 0; i--) {
+            const grad = ctx.createLinearGradient(this.snake[i].x, this.snake[i].y, this.snake[i-1].x, this.snake[i-1].y);
+            grad.addColorStop(0, this.color1);
+            grad.addColorStop(1, this.color2);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 8 * (i / this.SEGMENTS) + 2;
+            ctx.beginPath();
+            ctx.moveTo(this.snake[i].x, this.snake[i].y);
+            ctx.lineTo(this.snake[i-1].x, this.snake[i-1].y);
+            ctx.stroke();
+          }
+          for (let i = 4; i < this.SEGMENTS; i += 4) {
+            const seg = this.snake[i];
+            const angle = seg.angle - Math.PI/2;
+            ctx.save();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(seg.x, seg.y);
+            ctx.lineTo(seg.x + Math.cos(angle) * 18, seg.y + Math.sin(angle) * 18);
+            ctx.stroke();
+            ctx.restore();
+          }
+          // Baş
+          const head = this.head;
+          ctx.save();
+          ctx.translate(head.x, head.y);
+          ctx.rotate(head.angle);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI*2);
+          ctx.fillStyle = this.color2;
+          ctx.shadowColor = this.color2;
+          ctx.shadowBlur = 16;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.arc(8, -4, 3, 0, Math.PI*2);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(8, -4, 1.2, 0, Math.PI*2);
+          ctx.fillStyle = this.color1;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(12, 4);
+          ctx.quadraticCurveTo(16, 10, 6, 8);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(-8, -10);
+          ctx.lineTo(-18, -22);
+          ctx.moveTo(-8, 10);
+          ctx.lineTo(-18, 22);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.restore();
+        }
       };
     }
-    function animateDragon() {
-      // Hedefi belli aralıklarla değiştir veya hedefe çok yaklaştıysa hemen değiştir
-      changeTargetTimer--;
-      const head = snake[0];
-      const dx = dragonTarget.x - head.x;
-      const dy = dragonTarget.y - head.y;
-      const distToTarget = Math.sqrt(dx*dx + dy*dy);
-      if (changeTargetTimer <= 0 || distToTarget < 30) {
-        dragonTarget = randomTarget();
-        changeTargetTimer = 80 + Math.random() * 120;
-      }
-      // Baş segment hedefe yaklaşır
-      head.angle = Math.atan2(dy, dx);
-      head.x += Math.cos(head.angle) * 6;
-      head.y += Math.sin(head.angle) * 6;
-      // Diğer segmentler bir öncekini takip eder
-      for (let i = 1; i < SEGMENTS; i++) {
-        const prev = snake[i-1];
-        const seg = snake[i];
-        const tx = prev.x - seg.x;
-        const ty = prev.y - seg.y;
-        const dist = Math.sqrt(tx*tx + ty*ty);
-        const angle = Math.atan2(ty, tx);
-        if (dist > LENGTH) {
-          seg.x += Math.cos(angle) * (dist - LENGTH);
-          seg.y += Math.sin(angle) * (dist - LENGTH);
-        }
-        seg.angle = angle;
-      }
-      // Çizim (aynı)
+
+    // 2 farklı ejderha oluştur
+    const dragon1 = createDragon(width/3, height/2, '#283593', '#ff9800');
+    const dragon2 = createDragon(2*width/3, height/2, '#ff9800', '#283593');
+
+    function animateDragons() {
       ctx.clearRect(0, 0, width, height);
-      ctx.save();
-      for (let i = SEGMENTS-1; i > 0; i--) {
-        const grad = ctx.createLinearGradient(snake[i].x, snake[i].y, snake[i-1].x, snake[i-1].y);
-        grad.addColorStop(0, '#283593');
-        grad.addColorStop(1, '#ff9800');
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 8 * (i / SEGMENTS) + 2;
-        ctx.beginPath();
-        ctx.moveTo(snake[i].x, snake[i].y);
-        ctx.lineTo(snake[i-1].x, snake[i-1].y);
-        ctx.stroke();
-      }
-      for (let i = 4; i < SEGMENTS; i += 4) {
-        const seg = snake[i];
-        const angle = seg.angle - Math.PI/2;
-        ctx.save();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(seg.x, seg.y);
-        ctx.lineTo(seg.x + Math.cos(angle) * 18, seg.y + Math.sin(angle) * 18);
-        ctx.stroke();
-        ctx.restore();
-      }
-      ctx.save();
-      ctx.translate(head.x, head.y);
-      ctx.rotate(head.angle);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI*2);
-      ctx.fillStyle = '#ff9800';
-      ctx.shadowColor = '#ff9800';
-      ctx.shadowBlur = 16;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.beginPath();
-      ctx.arc(8, -4, 3, 0, Math.PI*2);
-      ctx.fillStyle = '#fff';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(8, -4, 1.2, 0, Math.PI*2);
-      ctx.fillStyle = '#283593';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(12, 4);
-      ctx.quadraticCurveTo(16, 10, 6, 8);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(-8, -10);
-      ctx.lineTo(-18, -22);
-      ctx.moveTo(-8, 10);
-      ctx.lineTo(-18, 22);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.restore();
-      ctx.restore();
-      requestAnimationFrame(animateDragon);
+      dragon1.update();
+      dragon2.update();
+      dragon1.draw(ctx);
+      dragon2.draw(ctx);
+      requestAnimationFrame(animateDragons);
     }
-    animateDragon();
+    animateDragons();
 
     // === Chat için Firebase Realtime Database ===
     // Database SDK ekle
