@@ -33,6 +33,7 @@
       0% { filter: hue-rotate(0deg); }
       100% { filter: hue-rotate(360deg); }
     }
+    /* Spotlight için kartın arka planı */
     .auth-card {
       background: #23272b;
       border-radius: 18px;
@@ -46,6 +47,10 @@
       position: relative;
       z-index: 1;
       transition: box-shadow 0.3s, filter 0.3s;
+      /* Spotlight için ekstra */
+      --spot-x: 50%;
+      --spot-y: 50%;
+      background-image: radial-gradient(600px circle at var(--spot-x) var(--spot-y), rgba(255,152,0,0.13), transparent 80%);
     }
     .auth-card:hover {
       box-shadow: 0 8px 40px #ff980088, 0 0 0 4px #28359333;
@@ -264,6 +269,20 @@
         .catch(err => {
           signupErrorMessage.textContent = err.message;
         });
+    });
+
+    // Mouse takip eden spotlight animasyonu
+    const card = document.querySelector('.auth-card');
+    card.addEventListener('mousemove', function(e) {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--spot-x', `${x}px`);
+      card.style.setProperty('--spot-y', `${y}px`);
+    });
+    card.addEventListener('mouseleave', function() {
+      card.style.setProperty('--spot-x', '50%');
+      card.style.setProperty('--spot-y', '50%');
     });
   </script>
   <!-- Bootstrap 5 JS (isteğe bağlı) -->
