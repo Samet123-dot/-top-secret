@@ -209,6 +209,7 @@
       <div class="mb-3">
         <input type="password" id="signup-password" class="form-control" placeholder="Şifre" required />
       </div>
+      <div class="g-recaptcha mb-3" data-sitekey="6Lf_04YrAAAAAK-EXMFw-1qXr0aj7Z2RzPCKvEBZ"></div>
       <button type="submit" class="btn btn-primary w-100 mb-2">Kayıt Ol</button>
       <button type="button" id="show-login" class="btn btn-secondary w-100">Giriş Yap</button>
       <div class="error" id="signup-error-message"></div>
@@ -359,6 +360,12 @@
       const email = document.getElementById('signup-email').value;
       const password = document.getElementById('signup-password').value;
       signupErrorMessage.textContent = '';
+      // reCAPTCHA kontrolü
+      var response = grecaptcha.getResponse();
+      if (!response) {
+        signupErrorMessage.textContent = "Lütfen robot olmadığınızı doğrulayın.";
+        return;
+      }
       // Önce e-posta zaten kayıtlı mı kontrol et
       firebase.auth().fetchSignInMethodsForEmail(email)
         .then((methods) => {
