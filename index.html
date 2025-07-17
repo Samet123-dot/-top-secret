@@ -259,6 +259,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
     (function(){
@@ -425,35 +426,51 @@
     };
   </script>
   <script>
-    // Chat demo JS
+    // Realtime Database bağlantısı
+    const db = firebase.database();
+    // Chat için kullanıcı adı sor (localStorage'da yoksa)
+    let username = localStorage.getItem('chat-username');
+    function askUsername() {
+      username = prompt('Kullanıcı adınızı girin:');
+      if (username && username.trim().length > 0) {
+        localStorage.setItem('chat-username', username);
+      } else {
+        askUsername();
+      }
+    }
+    // Chat ekranı açıldığında kullanıcı adı sor
+    function ensureUsername() {
+      if (!username) askUsername();
+    }
+    // Chat mesaj gönderme
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
-    const logoutBtn = document.getElementById('logout-btn');
-    let chatHistory = [];
-    function renderChat() {
-      chatMessages.innerHTML = '';
-      chatHistory.forEach(msg => {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'chat-message';
-        msgDiv.innerHTML = `<span class="chat-user">Sen:</span> <span class="chat-text">${msg}</span>`;
-        chatMessages.appendChild(msgDiv);
-      });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
     chatForm.addEventListener('submit', function(e) {
       e.preventDefault();
+      ensureUsername();
       const text = chatInput.value.trim();
       if (!text) return;
-      chatHistory.push(text);
-      renderChat();
+      db.ref('messages').push({
+        user: username,
+        text: text,
+        time: Date.now()
+      });
       chatInput.value = '';
     });
-    logoutBtn.onclick = function() {
-      document.getElementById('chat-container').style.display = 'none';
-      document.getElementById('auth-container').style.display = 'block';
-      chatHistory = [];
-      renderChat();
+    // Mesajları dinle ve ekrana yaz
+    db.ref('messages').limitToLast(50).on('child_added', function(snapshot) {
+      const msg = snapshot.val();
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-message';
+      msgDiv.innerHTML = `<span class="chat-user">${msg.user}:</span> <span class="chat-text">${msg.text}</span>`;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+    // Çıkışta kullanıcı adı silinsin
+    document.getElementById('logout-btn').onclick = function() {
+      auth.signOut();
+      localStorage.removeItem('chat-username');
     };
   </script>
 </body>
