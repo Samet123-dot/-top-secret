@@ -224,87 +224,6 @@
       .chat-messages { font-size: 1rem; padding: 0.7rem; }
       .chat-message { font-size: 1rem; padding: 0.6em 0.8em; }
     }
-    .toggle-online-btn {
-      position: absolute;
-      top: 24px;
-      right: 12px;
-      background: linear-gradient(90deg, #7c3aed 0%, #ff9800 100%);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-weight: bold;
-      font-size: 1.05rem;
-      padding: 0.5em 1.1em;
-      cursor: pointer;
-      z-index: 20;
-      box-shadow: 0 2px 8px #7c3aed22;
-      transition: background 0.2s;
-    }
-    .toggle-online-btn:hover { background: linear-gradient(90deg, #ff9800 0%, #7c3aed 100%); }
-    .online-panel {
-      position: absolute;
-      top: 60px;
-      right: 12px;
-      width: 220px;
-      background: #232136;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px #7c3aed33, 0 1.5px 0 #23272b;
-      z-index: 30;
-      padding: 0.7em 0.5em 1em 0.5em;
-      animation: cardFadeIn 0.5s;
-    }
-    .online-panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-      color: #ff9800;
-      font-size: 1.1rem;
-      margin-bottom: 0.7em;
-    }
-    .close-online-btn {
-      background: none;
-      border: none;
-      color: #ff9800;
-      font-size: 1.3rem;
-      cursor: pointer;
-      font-weight: bold;
-      line-height: 1;
-    }
-    .online-users-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      max-height: 260px;
-      overflow-y: auto;
-    }
-    .online-users-list li {
-      color: #fff;
-      background: #181a1b;
-      border-radius: 8px;
-      margin-bottom: 0.5em;
-      padding: 0.5em 0.8em;
-      font-size: 1.05rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5em;
-    }
-    .online-users-list li:before {
-      content: '';
-      display: inline-block;
-      width: 10px; height: 10px;
-      background: #43ea7b;
-      border-radius: 50%;
-      margin-right: 0.5em;
-    }
-    @media (max-width: 600px) {
-      .online-panel {
-        right: 2vw;
-        width: 90vw;
-        min-width: 0;
-      }
-      .toggle-online-btn { right: 2vw; }
-    }
   </style>
 </head>
 <body>
@@ -326,7 +245,7 @@
       <button type="button" class="auth-switch" id="show-login">Zaten hesabın var mı? Giriş Yap</button>
     </form>
   </div>
-  <div id="chat-container" style="display:none; position:relative;">
+  <div id="chat-container" style="display:none;">
     <div class="chat-card">
       <div class="chat-title">Sohbet</div>
       <div id="chat-messages" class="chat-messages"></div>
@@ -335,14 +254,6 @@
         <button id="chat-send" type="submit">Gönder</button>
       </form>
       <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
-    </div>
-    <button id="toggle-online-btn" class="toggle-online-btn">👥 Online Kişiler</button>
-    <div id="online-panel" class="online-panel" style="display:none;">
-      <div class="online-panel-header">
-        <span>Online Kişiler</span>
-        <button id="close-online-btn" class="close-online-btn">×</button>
-      </div>
-      <ul id="online-users-list" class="online-users-list"></ul>
     </div>
   </div>
   <!-- Firebase SDK -->
@@ -508,11 +419,6 @@
         document.getElementById('auth-container').style.display = 'block';
       }
     });
-
-    // Çıkış
-    document.getElementById('logout-btn').onclick = function() {
-      auth.signOut();
-    };
   </script>
   <script>
     // Realtime Database bağlantısı
@@ -531,57 +437,36 @@
     function ensureUsername() {
       if (!username) askUsername();
     }
-
-    // === ONLINE USERS ===
-    let onlineRef = null;
-    function setOnline() {
+    // Chat mesaj gönderme
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    chatForm.addEventListener('submit', function(e) {
+      e.preventDefault();
       ensureUsername();
-      onlineRef = db.ref('onlineUsers/' + username);
-      onlineRef.set(true);
-      onlineRef.onDisconnect().remove();
-    }
-    function removeOnline() {
-      if (onlineRef) onlineRef.remove();
-    }
-    // Online kullanıcıları dinle ve listele
-    const onlineUsersList = document.getElementById('online-users-list');
-    db.ref('onlineUsers').on('value', function(snapshot) {
-      const users = snapshot.val() || {};
-      onlineUsersList.innerHTML = '';
-      Object.keys(users).forEach(user => {
-        const li = document.createElement('li');
-        li.textContent = user;
-        onlineUsersList.appendChild(li);
+      const text = chatInput.value.trim();
+      if (!text) return;
+      db.ref('messages').push({
+        user: username,
+        text: text,
+        time: Date.now()
       });
+      chatInput.value = '';
     });
-    // Panel aç/kapa
-    const toggleOnlineBtn = document.getElementById('toggle-online-btn');
-    const onlinePanel = document.getElementById('online-panel');
-    const closeOnlineBtn = document.getElementById('close-online-btn');
-    toggleOnlineBtn.onclick = function() {
-      onlinePanel.style.display = onlinePanel.style.display === 'none' ? 'block' : 'none';
+    // Mesajları dinle ve ekrana yaz
+    db.ref('messages').limitToLast(50).on('child_added', function(snapshot) {
+      const msg = snapshot.val();
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-message';
+      msgDiv.innerHTML = `<span class=\"chat-user\">${msg.user}:</span> <span class=\"chat-text\">${msg.text}</span>`;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+    // Çıkışta kullanıcı adı silinsin
+    document.getElementById('logout-btn').onclick = function() {
+      auth.signOut();
+      localStorage.removeItem('chat-username');
     };
-    closeOnlineBtn.onclick = function() {
-      onlinePanel.style.display = 'none';
-    };
-    // Chat ekranı açıldığında online olarak ekle
-    const chatContainer = document.getElementById('chat-container');
-    const authContainer = document.getElementById('auth-container');
-    function handleAuthChange(user) {
-      if (user) {
-        authContainer.style.display = 'none';
-        chatContainer.style.display = 'flex';
-        setOnline();
-      } else {
-        chatContainer.style.display = 'none';
-        authContainer.style.display = 'block';
-        removeOnline();
-      }
-    }
-    // Oturum kontrolü: Sayfa yüklenince girişli mi kontrol et
-    auth.onAuthStateChanged(handleAuthChange);
-    // Sayfa kapanınca online listesinden çıkar
-    window.addEventListener('beforeunload', removeOnline);
   </script>
 </body>
 </html> 
