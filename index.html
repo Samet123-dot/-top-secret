@@ -1139,6 +1139,14 @@
     }
     // X O X Oyna butonuna tıklayınca XOX lobisine git
     document.addEventListener('DOMContentLoaded', function() {
+      if (!document.getElementById('go-to-xo-btn')) {
+        const xoBtn = document.createElement('button');
+        xoBtn.id = 'go-to-xo-btn';
+        xoBtn.textContent = 'X O X Oyna';
+        xoBtn.className = 'logout-btn';
+        xoBtn.style.marginTop = '0.7em';
+        document.querySelector('.chat-card').appendChild(xoBtn);
+      }
       const xoBtn = document.getElementById('go-to-xo-btn');
       if (xoBtn) xoBtn.onclick = showXOXLobby;
     });
