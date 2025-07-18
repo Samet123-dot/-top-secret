@@ -1068,9 +1068,17 @@
         if (winner) {
           statusDiv.textContent = `Kazanan: ${winner}`;
           statusDiv.style.color = winner==='X'?'#43ea7b':'#ff9800';
+          // Oyun bittikten sonra 3 saniye bekle ve odayı kapat
+          setTimeout(() => {
+            closeXOXRoomAfterGame(roomId);
+          }, 3000);
         } else if (game.board.every(cell => cell)) {
           statusDiv.textContent = 'Beraberlik!';
           statusDiv.style.color = '#fff';
+          // Beraberlik durumunda da 3 saniye bekle ve odayı kapat
+          setTimeout(() => {
+            closeXOXRoomAfterGame(roomId);
+          }, 3000);
         } else {
           statusDiv.textContent = '';
         }
@@ -1101,6 +1109,26 @@
         return null;
       }
       render();
+    }
+    // XOX oyunu bittikten sonra odayı kapat
+    function closeXOXRoomAfterGame(roomId) {
+      // Oyun ekranını kapat
+      const bg = document.getElementById('xox-game-modal-bg');
+      const modal = document.getElementById('xox-game-modal');
+      bg.style.display = 'none';
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+      
+      // Odayı tamamen sil
+      db.ref('xoxRooms/' + roomId).remove().then(() => {
+        // Lobi ekranını kapat ve oda listesine dön
+        document.getElementById('xox-room-lobby').style.display = 'none';
+        document.getElementById('xox-lobby-container').style.display = 'flex';
+        loadXOXRoomList();
+        
+        // Oyunculara bilgi ver
+        showCustomModal('Oyun bitti! Oda kapatıldı.');
+      });
     }
     // XOX hamle oynama
     function playXOXMove(roomId, userId, cellIdx) {
