@@ -433,6 +433,7 @@
       flex-direction: column;
       align-items: center;
       overflow-y: auto;
+      box-sizing: border-box;
     }
     .uno-game-hand {
       display: flex;
@@ -449,6 +450,7 @@
       padding-bottom: 0.5em;
       scrollbar-color: #ff9800 #232136;
       scrollbar-width: thin;
+      box-sizing: border-box;
     }
     .uno-game-hand::-webkit-scrollbar {
       height: 10px;
@@ -464,11 +466,13 @@
         min-width: unset;
         max-width: 100vw;
         max-height: 98vh;
+        box-sizing: border-box;
       }
       .uno-game-hand {
         max-width: 98vw;
         height: 62px;
         min-height: 62px;
+        box-sizing: border-box;
       }
     }
     .uno-game-pile {
