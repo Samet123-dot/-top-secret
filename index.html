@@ -874,46 +874,270 @@
         showRoomLobby(roomId);
       });
     };
-    // Oda lobisi göster
-    function showRoomLobby(roomId) {
-      document.getElementById('room-lobby').style.display = 'block';
-      document.getElementById('room-lobby-title').textContent = 'Oda Lobisi';
-      document.getElementById('room-players-list').innerHTML = 'Yükleniyor...';
-      // Oda bilgisi ve oyuncular
-      const roomRef = db.ref('unoRooms/' + roomId);
-      roomRef.on('value', function(snapshot) {
-        const room = snapshot.val();
-        if (!room) {
-          alert('Oda bulunamadı veya silindi.');
-          document.getElementById('room-lobby').style.display = 'none';
-          loadRoomList();
-          return;
-        }
-        // Oyuncu listesi
-        const players = room.players || {};
-        let html = '<div style="margin-bottom:0.7em;font-weight:bold;color:#ff9800;">Oyuncular:</div>';
-        Object.values(players).forEach((p, i) => {
-          html += `<div style='color:#fff;margin-bottom:0.3em;'>${i+1}. ${p.email}${p.isOwner ? ' (Oda Sahibi)' : ''}</div>`;
-        });
-        document.getElementById('room-players-list').innerHTML = html;
-        // Oda sahibi ise "Oyunu Başlat" butonunu göster
-        const user = auth.currentUser;
-        const isOwner = user && room.owner === user.uid;
-        document.getElementById('start-game-btn').style.display = isOwner ? 'block' : 'none';
-        document.getElementById('start-game-btn').onclick = function() {
-          alert('UNO oyunu başlatılacak! (Demo: Oyun mantığı henüz yok)');
-        };
-      });
-      // Odadan çık
-      document.getElementById('leave-room-btn').onclick = function() {
-        const user = auth.currentUser;
-        if (!user) return;
-        db.ref('unoRooms/' + roomId + '/players/' + user.uid).remove().then(() => {
-          document.getElementById('room-lobby').style.display = 'none';
-          loadRoomList();
-        });
-      };
-    }
+    // --- UNO OYUN MANTIĞI ---
+     // Kart veri yapısı
+     const UNO_COLORS = ['red', 'yellow', 'green', 'blue'];
+     const UNO_NUMBERS = Array.from({length: 10}, (_, i) => i.toString());
+     const UNO_SPECIALS = ['skip', 'reverse', 'draw2'];
+     const UNO_WILDS = ['wild', 'wild4'];
+     // Deste oluştur
+     function createUnoDeck() {
+       let deck = [];
+       UNO_COLORS.forEach(color => {
+         // 0'dan bir tane, 1-9'dan ikişer tane
+         deck.push({color, value: '0'});
+         UNO_NUMBERS.slice(1).forEach(num => {
+           deck.push({color, value: num});
+           deck.push({color, value: num});
+         });
+         // Özel kartlar (herinden 2)
+         UNO_SPECIALS.forEach(s => {
+           deck.push({color, value: s});
+           deck.push({color, value: s});
+         });
+       });
+       // Wild kartlar (4'er tane)
+       UNO_WILDS.forEach(w => {
+         for (let i = 0; i < 4; i++) deck.push({color: 'wild', value: w});
+       });
+       // Karıştır
+       for (let i = deck.length - 1; i > 0; i--) {
+         const j = Math.floor(Math.random() * (i + 1));
+         [deck[i], deck[j]] = [deck[j], deck[i]];
+       }
+       return deck;
+     }
+     // Oyun başlat
+     function startUnoGame(roomId) {
+       db.ref('unoRooms/' + roomId).once('value', function(snapshot) {
+         const room = snapshot.val();
+         if (!room) return;
+         const playerIds = Object.keys(room.players || {});
+         let deck = createUnoDeck();
+         // Her oyuncuya 7 kart dağıt
+         let hands = {};
+         playerIds.forEach(pid => {
+           hands[pid] = deck.splice(0, 7);
+         });
+         // Ortaya bir kart aç (wild gelirse tekrar çek)
+         let topCard;
+         do {
+           topCard = deck.shift();
+         } while (topCard.color === 'wild');
+         // Oyun durumu
+         const gameState = {
+           started: true,
+           deck,
+           hands,
+           pile: [topCard],
+           turn: playerIds[0],
+           direction: 1, // 1: saat yönü, -1: ters
+           winner: null,
+           lastAction: null
+         };
+         db.ref('unoRooms/' + roomId + '/game').set(gameState);
+         db.ref('unoRooms/' + roomId + '/started').set(true);
+       });
+     }
+     // Oyun başlat butonuna bağla
+     function bindStartGameBtn(roomId) {
+       const btn = document.getElementById('start-game-btn');
+       if (btn) {
+         btn.onclick = function() {
+           startUnoGame(roomId);
+         };
+       }
+     }
+     // Oda lobisi göster fonksiyonunu güncelle
+     function showRoomLobby(roomId) {
+       document.getElementById('room-lobby').style.display = 'block';
+       document.getElementById('room-lobby-title').textContent = 'Oda Lobisi';
+       document.getElementById('room-players-list').innerHTML = 'Yükleniyor...';
+       const roomRef = db.ref('unoRooms/' + roomId);
+       roomRef.on('value', function(snapshot) {
+         const room = snapshot.val();
+         if (!room) {
+           alert('Oda bulunamadı veya silindi.');
+           document.getElementById('room-lobby').style.display = 'none';
+           loadRoomList();
+           return;
+         }
+         // Oyuncu listesi
+         const players = room.players || {};
+         let html = '<div style="margin-bottom:0.7em;font-weight:bold;color:#ff9800;">Oyuncular:</div>';
+         Object.values(players).forEach((p, i) => {
+           html += `<div style='color:#fff;margin-bottom:0.3em;'>${i+1}. ${p.email}${p.isOwner ? ' (Oda Sahibi)' : ''}</div>`;
+         });
+         document.getElementById('room-players-list').innerHTML = html;
+         // Oda sahibi ise "Oyunu Başlat" butonunu göster
+         const user = auth.currentUser;
+         const isOwner = user && room.owner === user.uid;
+         document.getElementById('start-game-btn').style.display = isOwner && !room.started ? 'block' : 'none';
+         if (isOwner && !room.started) bindStartGameBtn(roomId);
+         // Oyun başladıysa oyun ekranını göster
+         if (room.started && room.game) {
+           showUnoGameScreen(roomId, room);
+         }
+       });
+       // Odadan çık
+       document.getElementById('leave-room-btn').onclick = function() {
+         const user = auth.currentUser;
+         if (!user) return;
+         db.ref('unoRooms/' + roomId + '/players/' + user.uid).remove().then(() => {
+           document.getElementById('room-lobby').style.display = 'none';
+           loadRoomList();
+         });
+       };
+     }
+     // Oyun ekranı
+     function showUnoGameScreen(roomId, room) {
+       // Basit bir modal ile gösterelim (ileride güzelleştiririz)
+       let modal = document.getElementById('uno-game-modal');
+       if (!modal) {
+         modal = document.createElement('div');
+         modal.id = 'uno-game-modal';
+         modal.style.position = 'fixed';
+         modal.style.top = '0';
+         modal.style.left = '0';
+         modal.style.width = '100vw';
+         modal.style.height = '100vh';
+         modal.style.background = 'rgba(24,26,27,0.97)';
+         modal.style.zIndex = '2000';
+         modal.style.display = 'flex';
+         modal.style.flexDirection = 'column';
+         modal.style.alignItems = 'center';
+         modal.style.justifyContent = 'center';
+         document.body.appendChild(modal);
+       }
+       // Oyun durumu
+       const user = auth.currentUser;
+       const game = room.game;
+       if (!game || !user) return;
+       const myHand = game.hands[user.uid] || [];
+       const topCard = game.pile[game.pile.length - 1];
+       const isMyTurn = game.turn === user.uid;
+       // Kart render fonksiyonu
+       function renderCard(card) {
+         let color = card.color === 'wild' ? '#444' : card.color;
+         let label = card.value;
+         if (label === 'skip') label = '⏭';
+         if (label === 'reverse') label = '🔄';
+         if (label === 'draw2') label = '+2';
+         if (label === 'wild') label = 'WILD';
+         if (label === 'wild4') label = 'WILD+4';
+         return `<div style='display:inline-block;margin:0.2em;padding:0.7em 1.1em;border-radius:10px;background:${color};color:#fff;font-weight:bold;font-size:1.2em;box-shadow:0 2px 8px #0003;cursor:pointer;'>${label}</div>`;
+       }
+       // Elimdeki kartlardan oynanabilir olanlar
+       function canPlay(card) {
+         return card.color === topCard.color || card.value === topCard.value || card.color === 'wild';
+       }
+       // Modal içeriği
+       let html = `<div style='background:#232136;padding:2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;position:relative;'>`;
+       html += `<div style='font-size:1.3em;font-weight:bold;color:#ff9800;margin-bottom:0.7em;text-align:center;'>UNO Oyun Ekranı</div>`;
+       html += `<div style='margin-bottom:1em;'>Ortadaki Kart: ${renderCard(topCard)}</div>`;
+       html += `<div style='margin-bottom:1em;'>Sıra: <span style='color:#43ea7b;font-weight:bold;'>${isMyTurn ? 'Sen' : (room.players[game.turn]?.email || 'Bilinmiyor')}</span></div>`;
+       html += `<div style='margin-bottom:1em;'>Elindeki Kartlar:</div><div id='my-hand'>`;
+       myHand.forEach((card, idx) => {
+         const playable = canPlay(card);
+         html += `<span data-idx='${idx}' style='opacity:${isMyTurn && playable ? 1 : 0.5};pointer-events:${isMyTurn && playable ? 'auto' : 'none'};'>${renderCard(card)}</span>`;
+       });
+       html += `</div>`;
+       html += `<button id='draw-card-btn' style='margin-top:1.2em;background:#7c3aed;color:#fff;font-weight:bold;border:none;border-radius:10px;padding:0.7em 1.2em;cursor:pointer;${isMyTurn ? '' : 'opacity:0.5;pointer-events:none;'}'>Kart Çek</button>`;
+       html += `<button id='close-uno-game-btn' style='position:absolute;top:0.7em;right:1em;background:none;border:none;font-size:1.7em;color:#ff9800;cursor:pointer;'>&times;</button>`;
+       if (game.winner) {
+         html += `<div style='margin-top:1.5em;font-size:1.2em;color:#43ea7b;font-weight:bold;'>Kazanan: ${room.players[game.winner]?.email || 'Bilinmiyor'}</div>`;
+       }
+       html += `</div>`;
+       modal.innerHTML = html;
+       // Kart oynama
+       document.querySelectorAll('#my-hand span[data-idx]').forEach(el => {
+         el.onclick = function() {
+           const idx = parseInt(el.getAttribute('data-idx'));
+           const card = myHand[idx];
+           if (!isMyTurn || !canPlay(card)) return;
+           playUnoCard(roomId, user.uid, idx, card);
+         };
+       });
+       // Kart çekme
+       document.getElementById('draw-card-btn').onclick = function() {
+         if (!isMyTurn) return;
+         drawUnoCard(roomId, user.uid);
+       };
+       // Kapat
+       document.getElementById('close-uno-game-btn').onclick = function() {
+         modal.style.display = 'none';
+       };
+       modal.style.display = 'flex';
+     }
+     // Kart oynama
+     function playUnoCard(roomId, userId, cardIdx, card) {
+       const roomRef = db.ref('unoRooms/' + roomId);
+       roomRef.transaction(room => {
+         if (!room || !room.game || room.game.turn !== userId) return room;
+         const hand = room.game.hands[userId];
+         if (!hand || !hand[cardIdx]) return room;
+         // Kart oynanabilir mi?
+         const topCard = room.game.pile[room.game.pile.length - 1];
+         if (!(card.color === topCard.color || card.value === topCard.value || card.color === 'wild')) return room;
+         // Kartı elden çıkar, ortaya ekle
+         hand.splice(cardIdx, 1);
+         room.game.pile.push(card);
+         // Kazanan kontrolü
+         if (hand.length === 0) {
+           room.game.winner = userId;
+           return room;
+         }
+         // Sıradaki oyuncu
+         const playerIds = Object.keys(room.players);
+         let idx = playerIds.indexOf(userId);
+         let dir = room.game.direction;
+         let nextIdx = (idx + dir + playerIds.length) % playerIds.length;
+         // Özel kartlar
+         if (card.value === 'reverse') {
+           room.game.direction *= -1;
+           dir = room.game.direction;
+           nextIdx = (idx + dir + playerIds.length) % playerIds.length;
+         }
+         if (card.value === 'skip') {
+           nextIdx = (nextIdx + dir + playerIds.length) % playerIds.length;
+         }
+         if (card.value === 'draw2') {
+           const nextPlayer = playerIds[nextIdx];
+           if (room.game.deck.length >= 2) {
+             room.game.hands[nextPlayer].push(room.game.deck.shift(), room.game.deck.shift());
+           }
+           nextIdx = (nextIdx + dir + playerIds.length) % playerIds.length;
+         }
+         if (card.value === 'wild4') {
+           const nextPlayer = playerIds[nextIdx];
+           for (let i = 0; i < 4; i++) {
+             if (room.game.deck.length > 0) room.game.hands[nextPlayer].push(room.game.deck.shift());
+           }
+           nextIdx = (nextIdx + dir + playerIds.length) % playerIds.length;
+         }
+         // Sıra güncelle
+         room.game.turn = playerIds[nextIdx];
+         room.game.lastAction = {type: 'play', card, userId};
+         return room;
+       });
+     }
+     // Kart çekme
+     function drawUnoCard(roomId, userId) {
+       const roomRef = db.ref('unoRooms/' + roomId);
+       roomRef.transaction(room => {
+         if (!room || !room.game || room.game.turn !== userId) return room;
+         if (room.game.deck.length === 0) return room;
+         room.game.hands[userId].push(room.game.deck.shift());
+         // Kart çekince sıra geçsin
+         const playerIds = Object.keys(room.players);
+         let idx = playerIds.indexOf(userId);
+         let dir = room.game.direction;
+         let nextIdx = (idx + dir + playerIds.length) % playerIds.length;
+         room.game.turn = playerIds[nextIdx];
+         room.game.lastAction = {type: 'draw', userId};
+         return room;
+       });
+     }
   </script>
 </body>
 </html> 
