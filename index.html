@@ -230,7 +230,7 @@
       box-shadow: 0 8px 32px #7c3aed33, 0 1.5px 0 #23272b;
       padding: 1.7rem 1.2rem 1.2rem 1.2rem;
       min-width: 220px;
-      max-width: 270px;
+      max-width: 240px;
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -245,6 +245,8 @@
       overflow: hidden;
       z-index: 3;
       animation: userInfoFadeIn 1.1s cubic-bezier(.68,-0.55,.27,1.55);
+      max-height: 100%;
+      overflow-y: auto;
     }
     @keyframes userInfoFadeIn {
       0% { opacity: 0; transform: translateY(-40px) scale(0.98); }
@@ -311,6 +313,8 @@
         min-width: unset;
         margin: 0 auto;
         margin-bottom: 1.2rem;
+        max-height: unset;
+        overflow-y: visible;
       }
     }
   </style>
