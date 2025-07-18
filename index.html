@@ -1135,6 +1135,18 @@
          if (room.started && room.game) {
            showUnoGameScreen(roomId, room);
          }
+         // Eğer sadece 1 oyuncu kaldıysa ve oyun başlamışsa, kalan kişiyi at
+         const playerIds = Object.keys(players);
+         if (room.started && playerIds.length === 1) {
+           const user = auth.currentUser;
+           if (user && players[user.uid]) {
+             // Oyun ekranını kapat ve uyarı göster
+             const unoModal = document.getElementById('uno-game-modal');
+             if (unoModal) unoModal.style.display = 'none';
+             showCustomModal('Odadaki tek kişi kaldığınız için oyun sona erdi.');
+             // Odanın silinmesi zaten mevcut mantıkta var
+           }
+         }
        });
        // Odadan çık
        document.getElementById('leave-room-btn').onclick = function() {
