@@ -544,6 +544,28 @@
       color: #ff9800;
       cursor: pointer;
     }
+    /* UNO kart elini sabit yükseklikte tutan kapsayıcı */
+    .uno-hand-scroll-wrap {
+      width: 100%;
+      max-width: 90vw;
+      height: 112px;
+      min-height: 112px;
+      max-height: 112px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    @media (max-width: 600px) {
+      .uno-hand-scroll-wrap {
+        max-width: 98vw;
+        height: 62px;
+        min-height: 62px;
+        max-height: 62px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1257,12 +1279,13 @@
          ${renderCard(topCard)}
        </div>`;
        html += `<div style='margin-bottom:0.7em;font-size:1.1em;'>Sıra: <span style='color:#43ea7b;font-weight:bold;'>${isMyTurn ? 'Sen' : (room.players[game.turn]?.email.split('@')[0] || 'Bilinmiyor')}</span></div>`;
-       html += `<div style='margin-bottom:0.5em;font-size:1.1em;'>Elindeki Kartlar:</div><div class='uno-game-hand' id='my-hand'>`;
+       html += `<div style='margin-bottom:0.5em;font-size:1.1em;'>Elindeki Kartlar:</div>`;
+       html += `<div class='uno-hand-scroll-wrap'><div class='uno-game-hand' id='my-hand'>`;
        myHand.forEach((card, idx) => {
          const playable = canPlay(card);
          html += `<span data-idx='${idx}'>${renderCard(card, {unplayable: !isMyTurn || !playable})}</span>`;
        });
-       html += `</div>`;
+       html += `</div></div>`;
        html += `<button id='draw-card-btn' class='uno-game-btn' ${isMyTurn ? '' : 'disabled'}>Kart Çek</button>`;
        html += `<button id='close-uno-game-btn' class='uno-game-close-btn' title='Kapat'>&times;</button>`;
        if (game.winner) {
