@@ -397,6 +397,14 @@
         </form>
         <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
       </div>
+      <div class="chat-card" id="image-chat-card" style="max-width:420px;min-width:320px;">
+        <div class="chat-title">Resim Sohbeti</div>
+        <div id="image-chat-messages" class="chat-messages" style="min-height:180px;"></div>
+        <form id="image-chat-form" class="chat-form" autocomplete="off" enctype="multipart/form-data">
+          <input id="image-chat-input" type="file" accept="image/*" style="flex:1;" required />
+          <button id="image-chat-send" type="submit">Resim Gönder</button>
+        </form>
+      </div>
       <!-- Bilgi paneli ana ekranda gösterilmeyecek, modal olarak açılacak -->
       <div id="user-info-panel" style="display:none;"></div>
     </div>
@@ -412,6 +420,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
     (function(){
@@ -702,6 +711,49 @@
       auth.signOut();
       localStorage.removeItem('chat-username');
     };
+
+    // Firebase Storage başlat
+    const storage = firebase.storage();
+
+    // Resim Sohbeti
+    const imageChatForm = document.getElementById('image-chat-form');
+    const imageChatInput = document.getElementById('image-chat-input');
+    const imageChatMessages = document.getElementById('image-chat-messages');
+
+    imageChatForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      ensureUsername();
+      const file = imageChatInput.files[0];
+      if (!file) return;
+      // Maksimum 2MB sınırı
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Resim boyutu 2MB geçmemeli!');
+        return;
+      }
+      const fileName = `${username}_${Date.now()}_${file.name}`;
+      const storageRef = storage.ref('chat-images/' + fileName);
+      storageRef.put(file).then(snapshot => {
+        return snapshot.ref.getDownloadURL();
+      }).then(url => {
+        // Veritabanına resim mesajı olarak ekle
+        db.ref('image-messages').push({
+          user: username,
+          url: url,
+          time: Date.now()
+        });
+        imageChatInput.value = '';
+      });
+    });
+
+    // Resim mesajlarını dinle ve ekrana yaz
+    db.ref('image-messages').limitToLast(50).on('child_added', function(snapshot) {
+      const msg = snapshot.val();
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-message';
+      msgDiv.innerHTML = `<span class="chat-user">${msg.user}:</span> <img src="${msg.url}" style="max-width:120px;max-height:120px;border-radius:8px;margin-left:0.5em;vertical-align:middle;box-shadow:0 2px 8px #7c3aed33;" alt="paylaşılan resim" />`;
+      imageChatMessages.appendChild(msgDiv);
+      imageChatMessages.scrollTop = imageChatMessages.scrollHeight;
+    });
   </script>
 </body>
 </html> 
