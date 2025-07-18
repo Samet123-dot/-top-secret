@@ -224,6 +224,57 @@
       .chat-messages { font-size: 1rem; padding: 0.7rem; }
       .chat-message { font-size: 1rem; padding: 0.6em 0.8em; }
     }
+    #user-info-panel {
+      background: #232136;
+      border-radius: 18px;
+      box-shadow: 0 4px 18px #7c3aed22, 0 1.5px 0 #23272b;
+      padding: 1.3rem 1.1rem 1.1rem 1.1rem;
+      min-width: 200px;
+      max-width: 250px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      font-size: 1.01rem;
+      align-self: flex-start;
+      margin-top: 0.5rem;
+      margin-left: 0.2rem;
+      border: 1.5px solid #7c3aed44;
+      transition: box-shadow 0.3s, border-color 0.3s;
+    }
+    .user-info-title {
+      font-weight: bold;
+      font-size: 1.13rem;
+      color: #ff9800;
+      margin-bottom: 0.6em;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 8px #7c3aed22;
+      text-align: center;
+    }
+    .user-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #181a1b;
+      border-radius: 8px;
+      padding: 0.38em 0.7em;
+      margin-bottom: 0.18em;
+      font-size: 0.99rem;
+      word-break: break-all;
+    }
+    @media (max-width: 900px) {
+      #chat-container > div {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.2rem;
+      }
+      #user-info-panel {
+        max-width: 98vw;
+        min-width: unset;
+        margin: 0 auto;
+        margin-bottom: 1.2rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -256,12 +307,12 @@
         </form>
         <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
       </div>
-      <div id="user-info-panel" style="background:#232136;border-radius:18px;box-shadow:0 8px 32px #7c3aed33,0 1.5px 0 #23272b;padding:1.5rem 1.2rem;min-width:220px;max-width:270px;color:#fff;display:flex;flex-direction:column;gap:0.7em;font-size:1.04rem;">
-        <div style="font-weight:bold;font-size:1.15rem;color:#ff9800;margin-bottom:0.7em;">Hesap Bilgileri</div>
-        <div><b>E-posta:</b> <span id="user-email">-</span></div>
-        <div><b>Kullanıcı ID:</b> <span id="user-uid">-</span></div>
-        <div><b>Kayıt Tarihi:</b> <span id="user-created">-</span></div>
-        <div><b>Son Giriş:</b> <span id="user-lastlogin">-</span></div>
+      <div id="user-info-panel">
+        <div class="user-info-title">Hesap Bilgileri</div>
+        <div class="user-info-row"><b>E-posta:</b> <span id="user-email">-</span></div>
+        <div class="user-info-row"><b>Kullanıcı ID:</b> <span id="user-uid">-</span></div>
+        <div class="user-info-row"><b>Kayıt Tarihi:</b> <span id="user-created">-</span></div>
+        <div class="user-info-row"><b>Son Giriş:</b> <span id="user-lastlogin">-</span></div>
       </div>
     </div>
   </div>
