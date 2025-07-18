@@ -246,14 +246,23 @@
     </form>
   </div>
   <div id="chat-container" style="display:none;">
-    <div class="chat-card">
-      <div class="chat-title">Sohbet</div>
-      <div id="chat-messages" class="chat-messages"></div>
-      <form id="chat-form" class="chat-form" autocomplete="off">
-        <input id="chat-input" type="text" placeholder="Mesajınızı yazın..." maxlength="300" required />
-        <button id="chat-send" type="submit">Gönder</button>
-      </form>
-      <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
+    <div style="display:flex;gap:1.5rem;justify-content:center;align-items:flex-start;">
+      <div class="chat-card">
+        <div class="chat-title">Sohbet</div>
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="chat-form" class="chat-form" autocomplete="off">
+          <input id="chat-input" type="text" placeholder="Mesajınızı yazın..." maxlength="300" required />
+          <button id="chat-send" type="submit">Gönder</button>
+        </form>
+        <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
+      </div>
+      <div id="user-info-panel" style="background:#232136;border-radius:18px;box-shadow:0 8px 32px #7c3aed33,0 1.5px 0 #23272b;padding:1.5rem 1.2rem;min-width:220px;max-width:270px;color:#fff;display:flex;flex-direction:column;gap:0.7em;font-size:1.04rem;">
+        <div style="font-weight:bold;font-size:1.15rem;color:#ff9800;margin-bottom:0.7em;">Hesap Bilgileri</div>
+        <div><b>E-posta:</b> <span id="user-email">-</span></div>
+        <div><b>Kullanıcı ID:</b> <span id="user-uid">-</span></div>
+        <div><b>Kayıt Tarihi:</b> <span id="user-created">-</span></div>
+        <div><b>Son Giriş:</b> <span id="user-lastlogin">-</span></div>
+      </div>
     </div>
   </div>
   <!-- Firebase SDK -->
@@ -414,6 +423,11 @@
       if (user) {
         document.getElementById('auth-container').style.display = 'none';
         document.getElementById('chat-container').style.display = 'flex';
+        // Kullanıcı bilgilerini göster
+        document.getElementById('user-email').textContent = user.email || '-';
+        document.getElementById('user-uid').textContent = user.uid || '-';
+        document.getElementById('user-created').textContent = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleString('tr-TR') : '-';
+        document.getElementById('user-lastlogin').textContent = user.metadata && user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString('tr-TR') : '-';
       } else {
         document.getElementById('chat-container').style.display = 'none';
         document.getElementById('auth-container').style.display = 'block';
