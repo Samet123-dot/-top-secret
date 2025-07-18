@@ -365,6 +365,143 @@
         overflow-y: visible;
       }
     }
+    /* UNO Kartları için özel stil */
+    .uno-card {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 96px;
+      margin: 0.18em 0.22em;
+      border-radius: 16px;
+      box-shadow: 0 4px 18px #0004, 0 1.5px 0 #23272b;
+      font-size: 2.1em;
+      font-weight: bold;
+      color: #fff;
+      cursor: pointer;
+      position: relative;
+      border: 3px solid #fff2;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      user-select: none;
+      background: #232136;
+    }
+    .uno-card.red { background: linear-gradient(135deg, #e53935 60%, #b71c1c 100%); border-color: #e53935; }
+    .uno-card.yellow { background: linear-gradient(135deg, #ffeb3b 60%, #fbc02d 100%); color: #232136; border-color: #ffeb3b; }
+    .uno-card.green { background: linear-gradient(135deg, #43ea7b 60%, #388e3c 100%); border-color: #43ea7b; }
+    .uno-card.blue { background: linear-gradient(135deg, #1976d2 60%, #0d47a1 100%); border-color: #1976d2; }
+    .uno-card.wild { background: linear-gradient(135deg, #444 60%, #232136 100%); border: 3px solid #ff9800; }
+    .uno-card .uno-value {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 0.1em;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 8px #0006;
+    }
+    .uno-card .uno-icon {
+      font-size: 1.3em;
+      margin-top: 0.1em;
+      text-shadow: 0 2px 8px #0006;
+    }
+    .uno-card:hover {
+      transform: scale(1.08) translateY(-4px) rotate(-2deg);
+      box-shadow: 0 8px 32px #ff980044, 0 2px 8px #7c3aed44;
+      border-color: #ff9800;
+      z-index: 2;
+    }
+    .uno-card.unplayable { opacity: 0.5; filter: grayscale(0.5); cursor: not-allowed; }
+    @media (max-width: 600px) {
+      .uno-card { width: 44px; height: 66px; font-size: 1.2em; border-radius: 10px; }
+    }
+    .uno-game-modal-content {
+      background: #232136;
+      padding: 2em 2.5em;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px #7c3aed33;
+      min-width: 320px;
+      max-width: 98vw;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .uno-game-pile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.2em;
+      gap: 1.2em;
+    }
+    .uno-game-hand {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.2em;
+      gap: 0.1em;
+    }
+    .uno-game-players {
+      display: flex;
+      flex-direction: row;
+      gap: 1.2em;
+      margin-bottom: 1.2em;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .uno-player-badge {
+      background: #181a1b;
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.5em 1.1em;
+      font-size: 1em;
+      font-weight: bold;
+      box-shadow: 0 2px 8px #7c3aed22;
+      border: 2px solid #7c3aed44;
+      min-width: 80px;
+      text-align: center;
+      position: relative;
+    }
+    .uno-player-badge.me { border-color: #ff9800; color: #ff9800; background: #232136; }
+    .uno-player-badge.turn { border-color: #43ea7b; color: #43ea7b; }
+    .uno-player-badge .uno-player-cards {
+      font-size: 0.95em;
+      color: #fff;
+      margin-left: 0.5em;
+      font-weight: normal;
+    }
+    .uno-game-info {
+      color: #ff9800;
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-bottom: 1em;
+      text-align: center;
+    }
+    .uno-game-btn {
+      background: linear-gradient(90deg, #7c3aed 0%, #ff9800 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1.08em;
+      padding: 0.7em 1.2em;
+      cursor: pointer;
+      margin: 0.5em 0.3em;
+      transition: background 0.3s, transform 0.18s;
+    }
+    .uno-game-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .uno-game-close-btn {
+      position: absolute;
+      top: 0.7em;
+      right: 1em;
+      background: none;
+      border: none;
+      font-size: 1.7em;
+      color: #ff9800;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -1000,7 +1137,7 @@
      }
      // Oyun ekranı
      function showUnoGameScreen(roomId, room) {
-       // Basit bir modal ile gösterelim (ileride güzelleştiririz)
+       // Modern, kaliteli modal ile göster
        let modal = document.getElementById('uno-game-modal');
        if (!modal) {
          modal = document.createElement('div');
@@ -1018,7 +1155,6 @@
          modal.style.justifyContent = 'center';
          document.body.appendChild(modal);
        }
-       // Oyun durumu
        const user = auth.currentUser;
        const game = room.game;
        if (!game || !user) return;
@@ -1026,35 +1162,54 @@
        const topCard = game.pile[game.pile.length - 1];
        const isMyTurn = game.turn === user.uid;
        // Kart render fonksiyonu
-       function renderCard(card) {
-         let color = card.color === 'wild' ? '#444' : card.color;
-         let label = card.value;
-         if (label === 'skip') label = '⏭';
-         if (label === 'reverse') label = '🔄';
-         if (label === 'draw2') label = '+2';
-         if (label === 'wild') label = 'WILD';
-         if (label === 'wild4') label = 'WILD+4';
-         return `<div style='display:inline-block;margin:0.2em;padding:0.7em 1.1em;border-radius:10px;background:${color};color:#fff;font-weight:bold;font-size:1.2em;box-shadow:0 2px 8px #0003;cursor:pointer;'>${label}</div>`;
+       function renderCard(card, opts = {}) {
+         let icon = '';
+         let value = card.value;
+         if (value === 'skip') icon = '⏭';
+         if (value === 'reverse') icon = '🔄';
+         if (value === 'draw2') icon = '+2';
+         if (value === 'wild') icon = '★';
+         if (value === 'wild4') icon = '★+4';
+         let colorClass = card.color;
+         let extra = opts.unplayable ? ' unplayable' : '';
+         return `<div class='uno-card ${colorClass}${extra}' title='${card.color} ${card.value}'>
+           <span class='uno-value'>${icon ? '' : value}</span>
+           <span class='uno-icon'>${icon}</span>
+         </div>`;
        }
-       // Elimdeki kartlardan oynanabilir olanlar
        function canPlay(card) {
          return card.color === topCard.color || card.value === topCard.value || card.color === 'wild';
        }
+       // Oyuncu listesi
+       let playersHtml = '';
+       Object.entries(room.players).forEach(([pid, p]) => {
+         let badgeClass = 'uno-player-badge';
+         if (pid === user.uid) badgeClass += ' me';
+         if (game.turn === pid) badgeClass += ' turn';
+         playersHtml += `<div class='${badgeClass}'>${p.email.split('@')[0]}
+           <span class='uno-player-cards'>(${(game.hands[pid]||[]).length} kart)</span>
+           ${game.turn === pid ? '<span style="margin-left:0.4em;font-size:1.1em;">▶️</span>' : ''}
+         </div>`;
+       });
        // Modal içeriği
-       let html = `<div style='background:#232136;padding:2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;position:relative;'>`;
-       html += `<div style='font-size:1.3em;font-weight:bold;color:#ff9800;margin-bottom:0.7em;text-align:center;'>UNO Oyun Ekranı</div>`;
-       html += `<div style='margin-bottom:1em;'>Ortadaki Kart: ${renderCard(topCard)}</div>`;
-       html += `<div style='margin-bottom:1em;'>Sıra: <span style='color:#43ea7b;font-weight:bold;'>${isMyTurn ? 'Sen' : (room.players[game.turn]?.email || 'Bilinmiyor')}</span></div>`;
-       html += `<div style='margin-bottom:1em;'>Elindeki Kartlar:</div><div id='my-hand'>`;
+       let html = `<div class='uno-game-modal-content'>`;
+       html += `<div class='uno-game-info'>UNO Oyun Ekranı</div>`;
+       html += `<div class='uno-game-players'>${playersHtml}</div>`;
+       html += `<div class='uno-game-pile'>
+         <div style='font-size:1.1em;color:#ff9800;font-weight:bold;'>Ortadaki Kart:</div>
+         ${renderCard(topCard)}
+       </div>`;
+       html += `<div style='margin-bottom:0.7em;font-size:1.1em;'>Sıra: <span style='color:#43ea7b;font-weight:bold;'>${isMyTurn ? 'Sen' : (room.players[game.turn]?.email.split('@')[0] || 'Bilinmiyor')}</span></div>`;
+       html += `<div style='margin-bottom:0.5em;font-size:1.1em;'>Elindeki Kartlar:</div><div class='uno-game-hand' id='my-hand'>`;
        myHand.forEach((card, idx) => {
          const playable = canPlay(card);
-         html += `<span data-idx='${idx}' style='opacity:${isMyTurn && playable ? 1 : 0.5};pointer-events:${isMyTurn && playable ? 'auto' : 'none'};'>${renderCard(card)}</span>`;
+         html += `<span data-idx='${idx}'>${renderCard(card, {unplayable: !isMyTurn || !playable})}</span>`;
        });
        html += `</div>`;
-       html += `<button id='draw-card-btn' style='margin-top:1.2em;background:#7c3aed;color:#fff;font-weight:bold;border:none;border-radius:10px;padding:0.7em 1.2em;cursor:pointer;${isMyTurn ? '' : 'opacity:0.5;pointer-events:none;'}'>Kart Çek</button>`;
-       html += `<button id='close-uno-game-btn' style='position:absolute;top:0.7em;right:1em;background:none;border:none;font-size:1.7em;color:#ff9800;cursor:pointer;'>&times;</button>`;
+       html += `<button id='draw-card-btn' class='uno-game-btn' ${isMyTurn ? '' : 'disabled'}>Kart Çek</button>`;
+       html += `<button id='close-uno-game-btn' class='uno-game-close-btn' title='Kapat'>&times;</button>`;
        if (game.winner) {
-         html += `<div style='margin-top:1.5em;font-size:1.2em;color:#43ea7b;font-weight:bold;'>Kazanan: ${room.players[game.winner]?.email || 'Bilinmiyor'}</div>`;
+         html += `<div style='margin-top:1.5em;font-size:1.2em;color:#43ea7b;font-weight:bold;'>Kazanan: ${room.players[game.winner]?.email.split('@')[0] || 'Bilinmiyor'}</div>`;
        }
        html += `</div>`;
        modal.innerHTML = html;
