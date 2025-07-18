@@ -412,6 +412,26 @@
     <div id="user-info-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:1000;"></div>
     <div id="user-info-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;"></div>
   </div>
+  <div id="xox-lobby-container" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#181a1b;">
+    <div class="auth-card" style="max-width:440px;width:100%;margin-bottom:2rem;">
+      <div class="auth-title">XOX Odaları</div>
+      <form id="create-xox-room-form" class="auth-form" style="margin-bottom:1.2em;">
+        <input type="text" id="xox-room-name-input" placeholder="Oda adı (örn: XOX-1)" required minlength="2" maxlength="20" />
+        <button type="submit" class="auth-btn">Oda Oluştur</button>
+      </form>
+      <div id="xox-room-list" style="margin-bottom:1em;"></div>
+      <button id="refresh-xox-rooms-btn" class="auth-switch" style="margin-top:0.5em;">Odaları Yenile</button>
+      <button id="back-to-chat-xox-btn" class="auth-switch" style="margin-top:0.5em;">Sohbete Dön</button>
+    </div>
+    <div id="xox-room-lobby" class="auth-card" style="max-width:440px;width:100%;display:none;">
+      <div class="auth-title" id="xox-room-lobby-title">Oda Lobisi</div>
+      <div id="xox-room-players-list" style="margin-bottom:1em;"></div>
+      <button id="start-xox-game-btn" class="auth-btn" style="display:none;">Oyunu Başlat</button>
+      <button id="leave-xox-room-btn" class="auth-switch" style="margin-top:0.5em;">Odadan Çık</button>
+    </div>
+  </div>
+  <div id="xox-game-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.97);z-index:4000;"></div>
+  <div id="xox-game-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4001;"></div>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -758,6 +778,369 @@
           onlineUsersList.appendChild(div);
         });
       }
+    });
+  </script>
+  <script>
+    // XOX Oyununu başlat
+    function showXOXGame() {
+      const bg = document.getElementById('xox-game-modal-bg');
+      const modal = document.getElementById('xox-game-modal');
+      bg.style.display = 'block';
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      let board = Array(9).fill('');
+      let turn = 'X';
+      let gameOver = false;
+      let score = { X: 0, O: 0 };
+      function render() {
+        let html = `<div style='background:#232136;padding:2.2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;animation:modalPopIn 0.5s cubic-bezier(.68,-0.55,.27,1.55);display:flex;flex-direction:column;align-items:center;'>`;
+        html += `<div style='font-size:1.3em;font-weight:bold;color:#ff9800;margin-bottom:0.7em;'>X O X (Tic Tac Toe)</div>`;
+        html += `<div style='margin-bottom:0.7em;font-size:1.1em;color:#fff;'>Sıra: <span style='color:${turn==="X"?"#43ea7b":"#ff9800"};font-weight:bold;'>${turn}</span></div>`;
+        html += `<div style='display:flex;gap:2em;margin-bottom:1em;'><div style='color:#43ea7b;font-weight:bold;'>X: ${score.X}</div><div style='color:#ff9800;font-weight:bold;'>O: ${score.O}</div></div>`;
+        html += `<div id='xox-board' style='display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(3,72px);gap:12px;margin-bottom:1.2em;'>`;
+        for(let i=0;i<9;i++) {
+          html += `<button class='xox-cell' data-idx='${i}' style='width:72px;height:72px;font-size:2.2em;font-weight:bold;border-radius:16px;background:#181a1b;color:${board[i]==='X'?'#43ea7b':board[i]==='O'?'#ff9800':'#fff'};border:3px solid #7c3aed;box-shadow:0 2px 8px #7c3aed22;transition:background 0.2s, color 0.2s;cursor:${board[i]||gameOver?'not-allowed':'pointer'};'>${board[i]}</button>`;
+        }
+        html += `</div>`;
+        html += `<div id='xox-status' style='min-height:2em;font-size:1.1em;font-weight:bold;color:#ff9800;margin-bottom:1em;'></div>`;
+        html += `<div style='display:flex;gap:1.2em;justify-content:center;'>`;
+        html += `<button id='xox-restart-btn' class='uno-game-btn'>Yeniden Oyna</button>`;
+        html += `<button id='xox-close-btn' class='uno-game-btn' style='background:#232136;color:#ff9800;border:2px solid #ff9800;'>Sohbete Dön</button>`;
+        html += `</div></div>`;
+        modal.innerHTML = html;
+        // Oyun durumu kontrolü
+        const winner = checkWinner(board);
+        const statusDiv = document.getElementById('xox-status');
+        if (winner) {
+          statusDiv.textContent = `Kazanan: ${winner}`;
+          statusDiv.style.color = winner==='X'?'#43ea7b':'#ff9800';
+        } else if (board.every(cell => cell)) {
+          statusDiv.textContent = 'Beraberlik!';
+          statusDiv.style.color = '#fff';
+        } else {
+          statusDiv.textContent = '';
+        }
+        // Hücrelere tıklama
+        document.querySelectorAll('.xox-cell').forEach(btn => {
+          btn.onclick = function() {
+            const idx = parseInt(btn.getAttribute('data-idx'));
+            if (board[idx] || gameOver) return;
+            board[idx] = turn;
+            const win = checkWinner(board);
+            if (win) {
+              gameOver = true;
+              score[win]++;
+            } else if (board.every(cell => cell)) {
+              gameOver = true;
+            } else {
+              turn = turn === 'X' ? 'O' : 'X';
+            }
+            render();
+        }});
+        // Yeniden oyna
+        document.getElementById('xox-restart-btn').onclick = function() {
+          board = Array(9).fill('');
+          turn = (score.X+score.O)%2===0 ? 'X' : 'O';
+          gameOver = false;
+          render();
+        };
+        // Kapat
+        document.getElementById('xox-close-btn').onclick = function() {
+          bg.style.display = 'none';
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+        };
+      }
+      function checkWinner(b) {
+        const lines = [
+          [0,1,2],[3,4,5],[6,7,8],
+          [0,3,6],[1,4,7],[2,5,8],
+          [0,4,8],[2,4,6]
+        ];
+        for (const [a,b1,c] of lines) {
+          if (b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a];
+        }
+        return null;
+      }
+      render();
+    }
+    // --- XOX ODA SİSTEMİ ---
+    // XOX lobisine yönlendirme
+    function showXOXLobby() {
+      document.getElementById('chat-container').style.display = 'none';
+      document.getElementById('xox-lobby-container').style.display = 'flex';
+      document.getElementById('xox-room-lobby').style.display = 'none';
+      loadXOXRoomList();
+    }
+    // Sohbete dön
+    document.addEventListener('DOMContentLoaded', function() {
+      const backBtn = document.getElementById('back-to-chat-xox-btn');
+      if (backBtn) backBtn.onclick = function() {
+        document.getElementById('xox-lobby-container').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+      };
+    });
+    // XOX oda oluşturma
+    const createXOXRoomForm = document.getElementById('create-xox-room-form');
+    if (createXOXRoomForm) {
+      createXOXRoomForm.onsubmit = function(e) {
+        e.preventDefault();
+        const roomName = document.getElementById('xox-room-name-input').value.trim();
+        if (!roomName) return;
+        const user = auth.currentUser;
+        if (!user) return alert('Giriş yapmalısınız!');
+        const roomRef = db.ref('xoxRooms').push();
+        roomRef.set({
+          name: roomName,
+          owner: user.uid,
+          ownerEmail: user.email,
+          created: Date.now(),
+          players: {
+            [user.uid]: {
+              email: user.email,
+              joined: Date.now(),
+              isOwner: true
+            }
+          },
+          started: false
+        }).then(() => {
+          joinXOXRoom(roomRef.key);
+        });
+      };
+    }
+    // XOX oda listesi yükle
+    function loadXOXRoomList() {
+      const roomListDiv = document.getElementById('xox-room-list');
+      roomListDiv.innerHTML = '<div style="color:#ff9800;text-align:center;">Yükleniyor...</div>';
+      db.ref('xoxRooms').orderByChild('started').equalTo(false).once('value', function(snapshot) {
+        const rooms = snapshot.val() || {};
+        let html = '';
+        const keys = Object.keys(rooms);
+        if (keys.length === 0) {
+          html = '<div style="color:#ff9800;text-align:center;">Açık oda yok</div>';
+        } else {
+          keys.forEach(key => {
+            const r = rooms[key];
+            html += `<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5em;background:#232136;padding:0.7em 1em;border-radius:10px;'>
+              <span style='font-weight:bold;color:#fff;'>${r.name}</span>
+              <button class='auth-btn' style='padding:0.3em 1em;font-size:0.98em;' onclick='joinXOXRoom("${key}")'>Katıl</button>
+            </div>`;
+          });
+        }
+        roomListDiv.innerHTML = html;
+      });
+    }
+    // XOX odaları yenile butonu
+    const refreshXOXRoomsBtn = document.getElementById('refresh-xox-rooms-btn');
+    if (refreshXOXRoomsBtn) refreshXOXRoomsBtn.onclick = loadXOXRoomList;
+    // XOX odaya katılma
+    window.joinXOXRoom = function(roomId) {
+      const user = auth.currentUser;
+      if (!user) return alert('Giriş yapmalısınız!');
+      const roomRef = db.ref('xoxRooms/' + roomId + '/players/' + user.uid);
+      roomRef.set({
+        email: user.email,
+        joined: Date.now(),
+        isOwner: false
+      }).then(() => {
+        showXOXRoomLobby(roomId);
+      });
+    };
+    // XOX oda lobisi göster
+    function showXOXRoomLobby(roomId) {
+      document.getElementById('xox-room-lobby').style.display = 'block';
+      document.getElementById('xox-room-lobby-title').textContent = 'Oda Lobisi';
+      document.getElementById('xox-room-players-list').innerHTML = 'Yükleniyor...';
+      const roomRef = db.ref('xoxRooms/' + roomId);
+      roomRef.on('value', function(snapshot) {
+        const room = snapshot.val();
+        if (!room) {
+          showCustomModal('Oda bulunamadı veya silindi.');
+          document.getElementById('xox-room-lobby').style.display = 'none';
+          loadXOXRoomList();
+          return;
+        }
+        // Eğer sadece 1 oyuncu kaldıysa ve oyun başlamışsa, kalan kişiyi at
+        const players = room.players || {};
+        const playerIds = Object.keys(players);
+        if (room.started && playerIds.length === 1) {
+          const user = auth.currentUser;
+          if (user && players[user.uid]) {
+            // Oyun ekranını kapat ve uyarı göster
+            const xoxModal = document.getElementById('xox-game-modal');
+            if (xoxModal) xoxModal.style.display = 'none';
+            showCustomModal('Odadaki tek kişi kaldığınız için oyun sona erdi.');
+          }
+        }
+        // Oyuncu listesi
+        let html = '<div style="margin-bottom:0.7em;font-weight:bold;color:#ff9800;">Oyuncular:</div>';
+        Object.values(players).forEach((p, i) => {
+          html += `<div style='color:#fff;margin-bottom:0.3em;'>${i+1}. ${p.email}${p.isOwner ? ' (Oda Sahibi)' : ''}</div>`;
+        });
+        document.getElementById('xox-room-players-list').innerHTML = html;
+        // Oda sahibi ise "Oyunu Başlat" butonunu göster
+        const user = auth.currentUser;
+        const isOwner = user && room.owner === user.uid;
+        document.getElementById('start-xox-game-btn').style.display = isOwner && !room.started ? 'block' : 'none';
+        if (isOwner && !room.started) bindStartXOXGameBtn(roomId);
+        // Oyun başladıysa oyun ekranını göster
+        if (room.started && room.game) {
+          showXOXGameScreen(roomId, room);
+        }
+      });
+      // Odadan çık
+      document.getElementById('leave-xox-room-btn').onclick = function() {
+        const user = auth.currentUser;
+        if (!user) return;
+        const playerRef = db.ref('xoxRooms/' + roomId + '/players/' + user.uid);
+        playerRef.remove().then(() => {
+          // Oda boş mu kontrol et
+          db.ref('xoxRooms/' + roomId + '/players').once('value', snap => {
+            const players = snap.val();
+            if (!players || Object.keys(players).length === 0) {
+              // Odayı tamamen sil
+              db.ref('xoxRooms/' + roomId).remove();
+            }
+          });
+          document.getElementById('xox-room-lobby').style.display = 'none';
+          loadXOXRoomList();
+        });
+      };
+    }
+    // XOX oyun başlat
+    function startXOXGame(roomId) {
+      db.ref('xoxRooms/' + roomId).once('value', function(snapshot) {
+        const room = snapshot.val();
+        if (!room) return;
+        const playerIds = Object.keys(room.players || {});
+        if (playerIds.length < 2) return;
+        // Oyun durumu
+        const gameState = {
+          started: true,
+          board: Array(9).fill(''),
+          turn: playerIds[0],
+          winner: null,
+          gameOver: false
+        };
+        db.ref('xoxRooms/' + roomId + '/game').set(gameState);
+        db.ref('xoxRooms/' + roomId + '/started').set(true);
+      });
+    }
+    // XOX oyun başlat butonuna bağla
+    function bindStartXOXGameBtn(roomId) {
+      const btn = document.getElementById('start-xox-game-btn');
+      if (btn) {
+        btn.onclick = function() {
+          startXOXGame(roomId);
+        };
+      }
+    }
+    // XOX oyun ekranı
+    function showXOXGameScreen(roomId, room) {
+      const bg = document.getElementById('xox-game-modal-bg');
+      const modal = document.getElementById('xox-game-modal');
+      bg.style.display = 'block';
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      const user = auth.currentUser;
+      const game = room.game;
+      if (!game || !user) return;
+      const isMyTurn = game.turn === user.uid;
+      function render() {
+        let html = `<div style='background:#232136;padding:2.2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;animation:modalPopIn 0.5s cubic-bezier(.68,-0.55,.27,1.55);display:flex;flex-direction:column;align-items:center;'>`;
+        html += `<div style='font-size:1.3em;font-weight:bold;color:#ff9800;margin-bottom:0.7em;'>X O X (Online)</div>`;
+        html += `<div style='margin-bottom:0.7em;font-size:1.1em;color:#fff;'>Sıra: <span style='color:${game.turn===user.uid?"#43ea7b":"#ff9800"};font-weight:bold;'>${game.turn===user.uid?'Sen':(room.players[game.turn]?.email.split('@')[0] || 'Bilinmiyor')}</span></div>`;
+        html += `<div id='xox-board' style='display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(3,72px);gap:12px;margin-bottom:1.2em;'>`;
+        for(let i=0;i<9;i++) {
+          const cell = game.board[i];
+          const isMyCell = (i % 2 === 0 && user.uid === Object.keys(room.players)[0]) || (i % 2 === 1 && user.uid === Object.keys(room.players)[1]);
+          html += `<button class='xox-cell' data-idx='${i}' style='width:72px;height:72px;font-size:2.2em;font-weight:bold;border-radius:16px;background:#181a1b;color:${cell==='X'?'#43ea7b':cell==='O'?'#ff9800':'#fff'};border:3px solid #7c3aed;box-shadow:0 2px 8px #7c3aed22;transition:background 0.2s, color 0.2s;cursor:${cell||game.gameOver?'not-allowed':'pointer'};'>${cell}</button>`;
+        }
+        html += `</div>`;
+        html += `<div id='xox-status' style='min-height:2em;font-size:1.1em;font-weight:bold;color:#ff9800;margin-bottom:1em;'></div>`;
+        html += `<div style='display:flex;gap:1.2em;justify-content:center;'>`;
+        html += `<button id='xox-close-game-btn' class='uno-game-btn' style='background:#232136;color:#ff9800;border:2px solid #ff9800;'>Sohbete Dön</button>`;
+        html += `</div></div>`;
+        modal.innerHTML = html;
+        // Oyun durumu kontrolü
+        const winner = checkXOXWinner(game.board);
+        const statusDiv = document.getElementById('xox-status');
+        if (winner) {
+          statusDiv.textContent = `Kazanan: ${winner}`;
+          statusDiv.style.color = winner==='X'?'#43ea7b':'#ff9800';
+        } else if (game.board.every(cell => cell)) {
+          statusDiv.textContent = 'Beraberlik!';
+          statusDiv.style.color = '#fff';
+        } else {
+          statusDiv.textContent = '';
+        }
+        // Hücrelere tıklama
+        document.querySelectorAll('.xox-cell').forEach(btn => {
+          btn.onclick = function() {
+            const idx = parseInt(btn.getAttribute('data-idx'));
+            if (game.board[idx] || game.gameOver || !isMyTurn) return;
+            playXOXMove(roomId, user.uid, idx);
+          };
+        });
+        // Kapat
+        document.getElementById('xox-close-game-btn').onclick = function() {
+          bg.style.display = 'none';
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+        };
+      }
+      function checkXOXWinner(b) {
+        const lines = [
+          [0,1,2],[3,4,5],[6,7,8],
+          [0,3,6],[1,4,7],[2,5,8],
+          [0,4,8],[2,4,6]
+        ];
+        for (const [a,b1,c] of lines) {
+          if (b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a];
+        }
+        return null;
+      }
+      render();
+    }
+    // XOX hamle oynama
+    function playXOXMove(roomId, userId, cellIdx) {
+      const roomRef = db.ref('xoxRooms/' + roomId);
+      roomRef.transaction(room => {
+        if (!room || !room.game || room.game.turn !== userId) return room;
+        if (room.game.board[cellIdx] || room.game.gameOver) return room;
+        const playerIds = Object.keys(room.players);
+        const playerIndex = playerIds.indexOf(userId);
+        const symbol = playerIndex === 0 ? 'X' : 'O';
+        room.game.board[cellIdx] = symbol;
+        const winner = checkXOXWinner(room.game.board);
+        if (winner) {
+          room.game.winner = winner;
+          room.game.gameOver = true;
+        } else if (room.game.board.every(cell => cell)) {
+          room.game.gameOver = true;
+        } else {
+          // Sıra geç
+          const nextPlayerIndex = (playerIndex + 1) % playerIds.length;
+          room.game.turn = playerIds[nextPlayerIndex];
+        }
+        return room;
+      });
+    }
+    function checkXOXWinner(b) {
+      const lines = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      for (const [a,b1,c] of lines) {
+        if (b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a];
+      }
+      return null;
+    }
+    // X O X Oyna butonuna tıklayınca XOX lobisine git
+    document.addEventListener('DOMContentLoaded', function() {
+      const xoBtn = document.getElementById('go-to-xo-btn');
+      if (xoBtn) xoBtn.onclick = showXOXLobby;
     });
   </script>
 </body>
