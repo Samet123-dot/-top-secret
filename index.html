@@ -641,6 +641,7 @@
     const chatMessages = document.getElementById('chat-messages');
     let chatCooldown = false;
     let cooldownTimeout = null;
+    let messageCount = 0;
     // Cooldown uyarısı için bir div ekle
     let cooldownDiv = document.getElementById('chat-cooldown');
     if (!cooldownDiv) {
@@ -674,24 +675,28 @@
         });
       }
       chatInput.value = '';
-      // 5 saniye cooldown başlat
-      chatCooldown = true;
-      chatInput.disabled = true;
-      chatForm.querySelector('button[type="submit"]').disabled = true;
-      let remaining = 5;
-      cooldownDiv.textContent = `${remaining} saniye bekleyin...`;
-      cooldownTimeout = setInterval(() => {
-        remaining--;
-        if (remaining > 0) {
-          cooldownDiv.textContent = `${remaining} saniye bekleyin...`;
-        } else {
-          clearInterval(cooldownTimeout);
-          chatCooldown = false;
-          chatInput.disabled = false;
-          chatForm.querySelector('button[type="submit"]').disabled = false;
-          cooldownDiv.textContent = '';
-        }
-      }, 1000);
+      messageCount++;
+      if (messageCount >= 3) {
+        // 2 saniye cooldown başlat
+        chatCooldown = true;
+        chatInput.disabled = true;
+        chatForm.querySelector('button[type="submit"]').disabled = true;
+        let remaining = 2;
+        cooldownDiv.textContent = `${remaining} saniye bekleyin...`;
+        cooldownTimeout = setInterval(() => {
+          remaining--;
+          if (remaining > 0) {
+            cooldownDiv.textContent = `${remaining} saniye bekleyin...`;
+          } else {
+            clearInterval(cooldownTimeout);
+            chatCooldown = false;
+            chatInput.disabled = false;
+            chatForm.querySelector('button[type="submit"]').disabled = false;
+            cooldownDiv.textContent = '';
+            messageCount = 0;
+          }
+        }, 1000);
+      }
     });
     // Mesajları dinle ve ekrana yaz
     db.ref('messages').limitToLast(50).on('child_added', function(snapshot) {
