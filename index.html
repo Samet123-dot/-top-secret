@@ -280,27 +280,50 @@
     }
     .user-info-row {
       display: flex;
-      align-items: center;
-      background: #181a1b;
-      border-radius: 10px;
-      padding: 0.45em 0.8em;
-      margin-bottom: 0.18em;
-      font-size: 1.01rem;
+      align-items: flex-start;
+      background: rgba(36, 37, 50, 0.92);
+      border-radius: 16px;
+      padding: 0.85em 1.1em 0.7em 1.1em;
+      margin-bottom: 0.55em;
+      font-size: 1.08rem;
       word-break: break-all;
-      box-shadow: 0 1px 4px #7c3aed11;
-      gap: 0.5em;
+      box-shadow: 0 2px 10px #7c3aed0a;
+      gap: 0.7em;
+      min-height: 48px;
     }
     .user-info-icon {
-      font-size: 1.18em;
-      margin-right: 0.38em;
-      opacity: 0.85;
+      font-size: 1.25em;
+      margin-right: 0.45em;
+      opacity: 0.82;
+      margin-top: 2px;
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .user-info-label {
-      font-weight: 500;
+      font-weight: 400;
       color: #ff9800;
-      margin-right: 0.3em;
-      min-width: 90px;
-      display: inline-block;
+      margin-right: 0.5em;
+      min-width: 92px;
+      font-size: 0.98em;
+      letter-spacing: 0.1px;
+      display: flex;
+      align-items: center;
+      opacity: 0.92;
+    }
+    .user-info-row span[id^="user-"] {
+      font-weight: 600;
+      color: #fff;
+      font-size: 1.09em;
+      word-break: break-all;
+      margin-left: 0.2em;
+      letter-spacing: 0.1px;
+      text-shadow: 0 1px 4px #23213633;
+      flex: 1;
+      text-align: right;
     }
     @media (max-width: 900px) {
       #chat-container > div {
