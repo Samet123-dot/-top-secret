@@ -1163,12 +1163,24 @@
          if (value === 'wild4') icon = '🎨+4';
          let colorClass = card.color;
          let extra = opts.unplayable ? ' unplayable' : '';
+         // Seçilen renk varsa, wild kartın köşesinde göster
+         let colorDot = '';
+         if ((card.value === 'wild' || card.value === 'wild4') && card.chosenColor) {
+           colorDot = `<span style='position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;background:${card.chosenColor};border:2px solid #fff;box-shadow:0 1px 4px #0006;'></span>`;
+         }
          return `<div class='uno-card ${colorClass}${extra}' title='${card.color} ${card.value}'>
            <span class='uno-value'>${icon ? '' : value}</span>
            <span class='uno-icon'>${icon}</span>
+           ${colorDot}
          </div>`;
        }
        function canPlay(card) {
+         // Wild kartı oynanabilir, diğerleri klasik şekilde
+         if (card.color === 'wild') return true;
+         // Eğer en üstte wild varsa ve chosenColor atanmışsa, o renge bak
+         if ((topCard.value === 'wild' || topCard.value === 'wild4') && topCard.chosenColor) {
+           return card.color === topCard.chosenColor || card.color === 'wild';
+         }
          return card.color === topCard.color || card.value === topCard.value || card.color === 'wild';
        }
        // Oyuncu listesi
@@ -1210,7 +1222,14 @@
            const idx = parseInt(el.getAttribute('data-idx'));
            const card = myHand[idx];
            if (!isMyTurn || !canPlay(card)) return;
-           playUnoCard(roomId, user.uid, idx, card);
+           // Eğer wild veya wild4 ise renk seçtir
+           if (card.value === 'wild' || card.value === 'wild4') {
+             showColorPicker(function(chosenColor) {
+               playUnoCard(roomId, user.uid, idx, {...card, chosenColor});
+             });
+           } else {
+             playUnoCard(roomId, user.uid, idx, card);
+           }
          };
        });
        // Kart çekme
@@ -1233,7 +1252,26 @@
          if (!hand || !hand[cardIdx]) return room;
          // Kart oynanabilir mi?
          const topCard = room.game.pile[room.game.pile.length - 1];
-         if (!(card.color === topCard.color || card.value === topCard.value || card.color === 'wild')) return room;
+         // Wild kartı için renk kontrolü
+         let isWild = card.color === 'wild';
+         let valid = false;
+         if (isWild) {
+           // Sadece chosenColor atanmışsa oynanabilir
+           if (!card.chosenColor) return room;
+           // En üstte wild varsa ve chosenColor atanmışsa, o renge bak
+           if ((topCard.value === 'wild' || topCard.value === 'wild4') && topCard.chosenColor) {
+             valid = card.chosenColor !== undefined;
+           } else {
+             valid = true;
+           }
+         } else {
+           if ((topCard.value === 'wild' || topCard.value === 'wild4') && topCard.chosenColor) {
+             valid = card.color === topCard.chosenColor || card.color === 'wild';
+           } else {
+             valid = card.color === topCard.color || card.value === topCard.value || card.color === 'wild';
+           }
+         }
+         if (!valid) return room;
          // Kartı elden çıkar, ortaya ekle
          hand.splice(cardIdx, 1);
          room.game.pile.push(card);
@@ -1292,6 +1330,49 @@
          room.game.lastAction = {type: 'draw', userId};
          return room;
        });
+     }
+     // Renk seçme modalı
+     function showColorPicker(onPick) {
+       let picker = document.getElementById('color-picker-modal');
+       if (!picker) {
+         picker = document.createElement('div');
+         picker.id = 'color-picker-modal';
+         picker.style.position = 'fixed';
+         picker.style.top = '0';
+         picker.style.left = '0';
+         picker.style.width = '100vw';
+         picker.style.height = '100vh';
+         picker.style.background = 'rgba(24,26,27,0.82)';
+         picker.style.zIndex = '4000';
+         picker.style.display = 'flex';
+         picker.style.alignItems = 'center';
+         picker.style.justifyContent = 'center';
+         picker.innerHTML = `<div style='background:#232136;padding:2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:280px;max-width:90vw;text-align:center;animation:modalPopIn 0.5s cubic-bezier(.68,-0.55,.27,1.55);'>
+           <div style='font-size:1.2em;font-weight:bold;color:#ff9800;margin-bottom:1.1em;'>Bir renk seç:</div>
+           <div style='display:flex;gap:1.2em;justify-content:center;margin-bottom:1.2em;'>
+             <button class='uno-card red' data-color='red' style='width:54px;height:54px;font-size:1.5em;'><span style='font-size:1.2em;'>🔴</span></button>
+             <button class='uno-card yellow' data-color='yellow' style='width:54px;height:54px;font-size:1.5em;'><span style='font-size:1.2em;'>🟡</span></button>
+             <button class='uno-card green' data-color='green' style='width:54px;height:54px;font-size:1.5em;'><span style='font-size:1.2em;'>🟢</span></button>
+             <button class='uno-card blue' data-color='blue' style='width:54px;height:54px;font-size:1.5em;'><span style='font-size:1.2em;'>🔵</span></button>
+           </div>
+           <button id='cancel-color-picker' class='uno-game-btn' style='background:#232136;color:#ff9800;border:2px solid #ff9800;'>İptal</button>
+         </div>`;
+         document.body.appendChild(picker);
+       }
+       picker.style.display = 'flex';
+       document.body.style.overflow = 'hidden';
+       picker.querySelectorAll('button[data-color]').forEach(btn => {
+         btn.onclick = function() {
+           const color = btn.getAttribute('data-color');
+           picker.style.display = 'none';
+           document.body.style.overflow = '';
+           onPick(color);
+         };
+       });
+       document.getElementById('cancel-color-picker').onclick = function() {
+         picker.style.display = 'none';
+         document.body.style.overflow = '';
+       };
      }
   </script>
   <script>
