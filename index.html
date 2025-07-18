@@ -1548,5 +1548,97 @@
     style.innerHTML = `@keyframes modalPopIn {0%{opacity:0;transform:scale(0.85);}100%{opacity:1;transform:scale(1);}}`;
     document.head.appendChild(style);
   </script>
+  <div id="xox-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.82);z-index:3000;"></div>
+  <div id="xox-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3001;"></div>
+  <script>
+    // XOX Oyununu başlat
+    function showXOXGame() {
+      const bg = document.getElementById('xox-modal-bg');
+      const modal = document.getElementById('xox-modal');
+      bg.style.display = 'block';
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      let board = Array(9).fill('');
+      let turn = 'X';
+      let gameOver = false;
+      let score = { X: 0, O: 0 };
+      function render() {
+        let html = `<div style='background:#232136;padding:2.2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;animation:modalPopIn 0.5s cubic-bezier(.68,-0.55,.27,1.55);display:flex;flex-direction:column;align-items:center;'>`;
+        html += `<div style='font-size:1.3em;font-weight:bold;color:#ff9800;margin-bottom:0.7em;'>X O X (Tic Tac Toe)</div>`;
+        html += `<div style='margin-bottom:0.7em;font-size:1.1em;color:#fff;'>Sıra: <span style='color:${turn==="X"?"#43ea7b":"#ff9800"};font-weight:bold;'>${turn}</span></div>`;
+        html += `<div style='display:flex;gap:2em;margin-bottom:1em;'><div style='color:#43ea7b;font-weight:bold;'>X: ${score.X}</div><div style='color:#ff9800;font-weight:bold;'>O: ${score.O}</div></div>`;
+        html += `<div id='xox-board' style='display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(3,72px);gap:12px;margin-bottom:1.2em;'>`;
+        for(let i=0;i<9;i++) {
+          html += `<button class='xox-cell' data-idx='${i}' style='width:72px;height:72px;font-size:2.2em;font-weight:bold;border-radius:16px;background:#181a1b;color:${board[i]==='X'?'#43ea7b':board[i]==='O'?'#ff9800':'#fff'};border:3px solid #7c3aed;box-shadow:0 2px 8px #7c3aed22;transition:background 0.2s, color 0.2s;cursor:${board[i]||gameOver?'not-allowed':'pointer'};'>${board[i]}</button>`;
+        }
+        html += `</div>`;
+        html += `<div id='xox-status' style='min-height:2em;font-size:1.1em;font-weight:bold;color:#ff9800;margin-bottom:1em;'></div>`;
+        html += `<div style='display:flex;gap:1.2em;justify-content:center;'>`;
+        html += `<button id='xox-restart-btn' class='uno-game-btn'>Yeniden Oyna</button>`;
+        html += `<button id='xox-close-btn' class='uno-game-btn' style='background:#232136;color:#ff9800;border:2px solid #ff9800;'>Sohbete Dön</button>`;
+        html += `</div></div>`;
+        modal.innerHTML = html;
+        // Oyun durumu kontrolü
+        const winner = checkWinner(board);
+        const statusDiv = document.getElementById('xox-status');
+        if (winner) {
+          statusDiv.textContent = `Kazanan: ${winner}`;
+          statusDiv.style.color = winner==='X'?'#43ea7b':'#ff9800';
+        } else if (board.every(cell => cell)) {
+          statusDiv.textContent = 'Beraberlik!';
+          statusDiv.style.color = '#fff';
+        } else {
+          statusDiv.textContent = '';
+        }
+        // Hücrelere tıklama
+        document.querySelectorAll('.xox-cell').forEach(btn => {
+          btn.onclick = function() {
+            const idx = parseInt(btn.getAttribute('data-idx'));
+            if (board[idx] || gameOver) return;
+            board[idx] = turn;
+            const win = checkWinner(board);
+            if (win) {
+              gameOver = true;
+              score[win]++;
+            } else if (board.every(cell => cell)) {
+              gameOver = true;
+            } else {
+              turn = turn === 'X' ? 'O' : 'X';
+            }
+            render();
+        }});
+        // Yeniden oyna
+        document.getElementById('xox-restart-btn').onclick = function() {
+          board = Array(9).fill('');
+          turn = (score.X+score.O)%2===0 ? 'X' : 'O';
+          gameOver = false;
+          render();
+        };
+        // Kapat
+        document.getElementById('xox-close-btn').onclick = function() {
+          bg.style.display = 'none';
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+        };
+      }
+      function checkWinner(b) {
+        const lines = [
+          [0,1,2],[3,4,5],[6,7,8],
+          [0,3,6],[1,4,7],[2,5,8],
+          [0,4,8],[2,4,6]
+        ];
+        for (const [a,b1,c] of lines) {
+          if (b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a];
+        }
+        return null;
+      }
+      render();
+    }
+    // X O X Oyna butonuna tıklayınca aç
+    document.addEventListener('DOMContentLoaded', function() {
+      const xoBtn = document.getElementById('go-to-xo-btn');
+      if (xoBtn) xoBtn.onclick = showXOXGame;
+    });
+  </script>
 </body>
 </html> 
