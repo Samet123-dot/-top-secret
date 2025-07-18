@@ -397,27 +397,16 @@
         </form>
         <button id="logout-btn" class="logout-btn">Çıkış Yap</button>
       </div>
-      <div id="user-info-panel">
-        <div class="user-info-avatar">
-          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="#7c3aed" stroke-width="2"/>
-            <ellipse cx="30" cy="26" rx="11" ry="11" fill="#fff" fill-opacity="0.95"/>
-            <ellipse cx="30" cy="47" rx="16" ry="9" fill="#fff" fill-opacity="0.7"/>
-            <defs>
-              <linearGradient id="avatarGradient" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#7c3aed"/>
-                <stop offset="1" stop-color="#ff9800"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <div class="user-info-title">Hesap Bilgileri</div>
-        <div class="user-info-row"><span class="user-info-icon">📧</span><span class="user-info-label">E-posta:</span> <span id="user-email" class="user-email" title="-">-</span></div>
-        <div class="user-info-row"><span class="user-info-icon">🆔</span><span class="user-info-label">Kullanıcı ID:</span> <span id="user-uid" class="user-id" title="-">-</span></div>
-        <div class="user-info-row"><span class="user-info-icon">📅</span><span class="user-info-label">Kayıt Tarihi:</span> <span id="user-created">-</span></div>
-        <div class="user-info-row"><span class="user-info-icon">⏰</span><span class="user-info-label">Son Giriş:</span> <span id="user-lastlogin">-</span></div>
-      </div>
+      <!-- Bilgi paneli ana ekranda gösterilmeyecek, modal olarak açılacak -->
+      <div id="user-info-panel" style="display:none;"></div>
     </div>
+    <!-- Sağ alt bilgi butonu -->
+    <button id="show-user-info-btn" title="Hesap Bilgileri" style="position:fixed;right:32px;bottom:32px;z-index:1001;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;">
+      <span style="font-size:2.1rem;color:#fff;">👤</span>
+    </button>
+    <!-- Modal arka planı ve bilgi paneli -->
+    <div id="user-info-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:1000;"></div>
+    <div id="user-info-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;"></div>
   </div>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -577,18 +566,52 @@
       if (user) {
         document.getElementById('auth-container').style.display = 'none';
         document.getElementById('chat-container').style.display = 'flex';
-        // Kullanıcı bilgilerini göster
-        document.getElementById('user-email').textContent = user.email || '-';
-        document.getElementById('user-email').title = user.email || '-';
-        document.getElementById('user-uid').textContent = user.uid || '-';
-        document.getElementById('user-uid').title = user.uid || '-';
-        document.getElementById('user-created').textContent = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleString('tr-TR') : '-';
-        document.getElementById('user-lastlogin').textContent = user.metadata && user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString('tr-TR') : '-';
+        // Kullanıcı bilgilerini göster (paneli modalda kullanmak için HTML'ini oluştur)
+        const userInfoHtml = `
+          <div class="user-info-avatar">
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="#7c3aed" stroke-width="2"/>
+              <ellipse cx="30" cy="26" rx="11" ry="11" fill="#fff" fill-opacity="0.95"/>
+              <ellipse cx="30" cy="47" rx="16" ry="9" fill="#fff" fill-opacity="0.7"/>
+              <defs>
+                <linearGradient id="avatarGradient" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#7c3aed"/>
+                  <stop offset="1" stop-color="#ff9800"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="user-info-title">Hesap Bilgileri <button id='close-user-info-modal' style='float:right;background:none;border:none;font-size:1.5rem;color:#ff9800;cursor:pointer;margin-top:-0.2em;' title='Kapat'>&times;</button></div>
+          <div class="user-info-row"><span class="user-info-icon">📧</span><span class="user-info-label">E-posta:</span> <span id="user-email" class="user-email" title="${user.email || '-'}">${user.email || '-'}</span></div>
+          <div class="user-info-row"><span class="user-info-icon">🆔</span><span class="user-info-label">Kullanıcı ID:</span> <span id="user-uid" class="user-id" title="${user.uid || '-'}">${user.uid || '-'}</span></div>
+          <div class="user-info-row"><span class="user-info-icon">📅</span><span class="user-info-label">Kayıt Tarihi:</span> <span id="user-created">${user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleString('tr-TR') : '-'}</span></div>
+          <div class="user-info-row"><span class="user-info-icon">⏰</span><span class="user-info-label">Son Giriş:</span> <span id="user-lastlogin">${user.metadata && user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString('tr-TR') : '-'}</span></div>
+        `;
+        document.getElementById('user-info-panel').innerHTML = userInfoHtml;
+        document.getElementById('user-info-modal').innerHTML = userInfoHtml;
       } else {
         document.getElementById('chat-container').style.display = 'none';
         document.getElementById('auth-container').style.display = 'block';
       }
     });
+   // Bilgi butonu ve modal açma/kapama
+   const showUserInfoBtn = document.getElementById('show-user-info-btn');
+   const userInfoModalBg = document.getElementById('user-info-modal-bg');
+   const userInfoModal = document.getElementById('user-info-modal');
+   showUserInfoBtn.onclick = function() {
+     userInfoModalBg.style.display = 'block';
+     userInfoModal.style.display = 'block';
+     // Kapat butonunu her açışta yeniden bağla
+     setTimeout(() => {
+       const closeBtn = document.getElementById('close-user-info-modal');
+       if (closeBtn) closeBtn.onclick = closeUserInfoModal;
+     }, 50);
+   };
+   userInfoModalBg.onclick = closeUserInfoModal;
+   function closeUserInfoModal() {
+     userInfoModalBg.style.display = 'none';
+     userInfoModal.style.display = 'none';
+   }
   </script>
   <script>
     // Realtime Database bağlantısı
