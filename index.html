@@ -1253,12 +1253,20 @@
            if (room.game.deck.length >= 2) {
              room.game.hands[nextPlayer].push(room.game.deck.shift(), room.game.deck.shift());
            }
+           // Ortadaki kartı kaldır (sadece en son kart kalsın)
+           if (room.game.pile.length > 1) {
+             room.game.pile.splice(room.game.pile.length - 2, 1);
+           }
            nextIdx = (nextIdx + dir + playerIds.length) % playerIds.length;
          }
          if (card.value === 'wild4') {
            const nextPlayer = playerIds[nextIdx];
            for (let i = 0; i < 4; i++) {
              if (room.game.deck.length > 0) room.game.hands[nextPlayer].push(room.game.deck.shift());
+           }
+           // Ortadaki kartı kaldır (sadece en son kart kalsın)
+           if (room.game.pile.length > 1) {
+             room.game.pile.splice(room.game.pile.length - 2, 1);
            }
            nextIdx = (nextIdx + dir + playerIds.length) % playerIds.length;
          }
