@@ -1014,29 +1014,22 @@
     // --- UNO OYUN MANTIĞI ---
      // Kart veri yapısı
      const UNO_COLORS = ['red', 'yellow', 'green', 'blue'];
-     const UNO_NUMBERS = Array.from({length: 10}, (_, i) => i.toString());
-     const UNO_SPECIALS = ['skip', 'reverse', 'draw2'];
-     const UNO_WILDS = ['wild', 'wild4'];
-     // Deste oluştur
+     const UNO_NUMBERS = ['1','2','3','4','5','6','7','8','9'];
+     // Deste oluştur (sadece 1-9, +2, wild, wild+4)
      function createUnoDeck() {
        let deck = [];
        UNO_COLORS.forEach(color => {
-         // 0'dan bir tane, 1-9'dan ikişer tane
-         deck.push({color, value: '0'});
-         UNO_NUMBERS.slice(1).forEach(num => {
+         UNO_NUMBERS.forEach(num => {
            deck.push({color, value: num});
            deck.push({color, value: num});
          });
-         // Özel kartlar (herinden 2)
-         UNO_SPECIALS.forEach(s => {
-           deck.push({color, value: s});
-           deck.push({color, value: s});
-         });
+         // +2 kartı (her renkten 2 tane)
+         deck.push({color, value: 'draw2'});
+         deck.push({color, value: 'draw2'});
        });
        // Wild kartlar (4'er tane)
-       UNO_WILDS.forEach(w => {
-         for (let i = 0; i < 4; i++) deck.push({color: 'wild', value: w});
-       });
+       for (let i = 0; i < 4; i++) deck.push({color: 'wild', value: 'wild'});
+       for (let i = 0; i < 4; i++) deck.push({color: 'wild', value: 'wild4'});
        // Karıştır
        for (let i = deck.length - 1; i > 0; i--) {
          const j = Math.floor(Math.random() * (i + 1));
@@ -1165,11 +1158,9 @@
        function renderCard(card, opts = {}) {
          let icon = '';
          let value = card.value;
-         if (value === 'skip') icon = '⏭';
-         if (value === 'reverse') icon = '🔄';
          if (value === 'draw2') icon = '+2';
-         if (value === 'wild') icon = '★';
-         if (value === 'wild4') icon = '★+4';
+         if (value === 'wild') icon = '🎨';
+         if (value === 'wild4') icon = '🎨+4';
          let colorClass = card.color;
          let extra = opts.unplayable ? ' unplayable' : '';
          return `<div class='uno-card ${colorClass}${extra}' title='${card.color} ${card.value}'>
@@ -1257,14 +1248,6 @@
          let dir = room.game.direction;
          let nextIdx = (idx + dir + playerIds.length) % playerIds.length;
          // Özel kartlar
-         if (card.value === 'reverse') {
-           room.game.direction *= -1;
-           dir = room.game.direction;
-           nextIdx = (idx + dir + playerIds.length) % playerIds.length;
-         }
-         if (card.value === 'skip') {
-           nextIdx = (nextIdx + dir + playerIds.length) % playerIds.length;
-         }
          if (card.value === 'draw2') {
            const nextPlayer = playerIds[nextIdx];
            if (room.game.deck.length >= 2) {
