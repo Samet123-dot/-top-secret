@@ -235,7 +235,6 @@
       <button type="submit" class="auth-btn">Giriş Yap</button>
       <div class="auth-error" id="login-error"></div>
       <button type="button" class="auth-switch" id="show-signup">Hesabın yok mu? Kayıt Ol</button>
-      <button type="button" class="auth-switch" id="forgot-password" style="margin-top:0.2em;color:#ff9800;text-decoration:underline;font-size:0.98rem;">Şifremi Unuttum?</button>
     </form>
     <form class="auth-form" id="signup-form" autocomplete="off" style="display:none;">
       <input type="email" id="signup-email" placeholder="E-posta" required />
@@ -296,25 +295,6 @@
       signupForm.style.display = 'none';
       loginForm.style.display = 'flex';
       formTitle.textContent = 'Giriş Yap';
-    };
-    // Şifre sıfırlama
-    document.getElementById('forgot-password').onclick = function() {
-      const email = document.getElementById('login-email').value.trim();
-      const errorDiv = document.getElementById('login-error');
-      errorDiv.style.color = '#ff9800';
-      errorDiv.textContent = '';
-      if (!email) {
-        errorDiv.textContent = 'Lütfen e-posta adresinizi girin.';
-        return;
-      }
-      auth.sendPasswordResetEmail(email)
-        .then(() => {
-          errorDiv.textContent = 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!';
-        })
-        .catch(err => {
-          errorDiv.style.color = '#ff6b6b';
-          errorDiv.textContent = err.message;
-        });
     };
 
     // Giriş
