@@ -412,6 +412,24 @@
     <div id="user-info-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:1000;"></div>
     <div id="user-info-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;"></div>
   </div>
+  <div id="uno-lobby-container" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#181a1b;">
+    <div class="auth-card" style="max-width:440px;width:100%;margin-bottom:2rem;">
+      <div class="auth-title">UNO Odaları</div>
+      <form id="create-room-form" class="auth-form" style="margin-bottom:1.2em;">
+        <input type="text" id="room-name-input" placeholder="Oda adı (örn: UNO-1)" required minlength="2" maxlength="20" />
+        <button type="submit" class="auth-btn">Oda Oluştur</button>
+      </form>
+      <div id="room-list" style="margin-bottom:1em;"></div>
+      <button id="refresh-rooms-btn" class="auth-switch" style="margin-top:0.5em;">Odaları Yenile</button>
+      <button id="back-to-chat-btn" class="auth-switch" style="margin-top:0.5em;">Sohbete Dön</button>
+    </div>
+    <div id="room-lobby" class="auth-card" style="max-width:440px;width:100%;display:none;">
+      <div class="auth-title" id="room-lobby-title">Oda Lobisi</div>
+      <div id="room-players-list" style="margin-bottom:1em;"></div>
+      <button id="start-game-btn" class="auth-btn" style="display:none;">Oyunu Başlat</button>
+      <button id="leave-room-btn" class="auth-switch" style="margin-top:0.5em;">Odadan Çık</button>
+    </div>
+  </div>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -759,6 +777,143 @@
         });
       }
     });
+  </script>
+  <script>
+    // --- UNO ODA SİSTEMİ ---
+    // Girişten sonra UNO lobisine yönlendirme
+    function showUnoLobby() {
+      document.getElementById('chat-container').style.display = 'none';
+      document.getElementById('uno-lobby-container').style.display = 'flex';
+      document.getElementById('room-lobby').style.display = 'none';
+      loadRoomList();
+    }
+    // Sohbete dön
+    document.addEventListener('DOMContentLoaded', function() {
+      const backBtn = document.getElementById('back-to-chat-btn');
+      if (backBtn) backBtn.onclick = function() {
+        document.getElementById('uno-lobby-container').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+      };
+    });
+    // Chat ekranında UNO'ya geçiş butonu ekle
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!document.getElementById('go-to-uno-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'go-to-uno-btn';
+        btn.textContent = 'UNO Oyna';
+        btn.className = 'logout-btn';
+        btn.style.marginTop = '0.7em';
+        btn.onclick = showUnoLobby;
+        document.querySelector('.chat-card').appendChild(btn);
+      }
+    });
+    // Oda oluşturma
+    const createRoomForm = document.getElementById('create-room-form');
+    if (createRoomForm) {
+      createRoomForm.onsubmit = function(e) {
+        e.preventDefault();
+        const roomName = document.getElementById('room-name-input').value.trim();
+        if (!roomName) return;
+        const user = auth.currentUser;
+        if (!user) return alert('Giriş yapmalısınız!');
+        const roomRef = db.ref('unoRooms').push();
+        roomRef.set({
+          name: roomName,
+          owner: user.uid,
+          ownerEmail: user.email,
+          created: Date.now(),
+          players: {
+            [user.uid]: {
+              email: user.email,
+              joined: Date.now(),
+              isOwner: true
+            }
+          },
+          started: false
+        }).then(() => {
+          joinRoom(roomRef.key);
+        });
+      };
+    }
+    // Oda listesi yükle
+    function loadRoomList() {
+      const roomListDiv = document.getElementById('room-list');
+      roomListDiv.innerHTML = '<div style="color:#ff9800;text-align:center;">Yükleniyor...</div>';
+      db.ref('unoRooms').orderByChild('started').equalTo(false).once('value', function(snapshot) {
+        const rooms = snapshot.val() || {};
+        const user = auth.currentUser;
+        let html = '';
+        const keys = Object.keys(rooms);
+        if (keys.length === 0) {
+          html = '<div style="color:#ff9800;text-align:center;">Açık oda yok</div>';
+        } else {
+          keys.forEach(key => {
+            const r = rooms[key];
+            html += `<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5em;background:#232136;padding:0.7em 1em;border-radius:10px;'>
+              <span style='font-weight:bold;color:#fff;'>${r.name}</span>
+              <button class='auth-btn' style='padding:0.3em 1em;font-size:0.98em;' onclick='joinRoom("${key}")'>Katıl</button>
+            </div>`;
+          });
+        }
+        roomListDiv.innerHTML = html;
+      });
+    }
+    // Odaları yenile butonu
+    const refreshRoomsBtn = document.getElementById('refresh-rooms-btn');
+    if (refreshRoomsBtn) refreshRoomsBtn.onclick = loadRoomList;
+    // Odaya katılma
+    window.joinRoom = function(roomId) {
+      const user = auth.currentUser;
+      if (!user) return alert('Giriş yapmalısınız!');
+      const roomRef = db.ref('unoRooms/' + roomId + '/players/' + user.uid);
+      roomRef.set({
+        email: user.email,
+        joined: Date.now(),
+        isOwner: false
+      }).then(() => {
+        showRoomLobby(roomId);
+      });
+    };
+    // Oda lobisi göster
+    function showRoomLobby(roomId) {
+      document.getElementById('room-lobby').style.display = 'block';
+      document.getElementById('room-lobby-title').textContent = 'Oda Lobisi';
+      document.getElementById('room-players-list').innerHTML = 'Yükleniyor...';
+      // Oda bilgisi ve oyuncular
+      const roomRef = db.ref('unoRooms/' + roomId);
+      roomRef.on('value', function(snapshot) {
+        const room = snapshot.val();
+        if (!room) {
+          alert('Oda bulunamadı veya silindi.');
+          document.getElementById('room-lobby').style.display = 'none';
+          loadRoomList();
+          return;
+        }
+        // Oyuncu listesi
+        const players = room.players || {};
+        let html = '<div style="margin-bottom:0.7em;font-weight:bold;color:#ff9800;">Oyuncular:</div>';
+        Object.values(players).forEach((p, i) => {
+          html += `<div style='color:#fff;margin-bottom:0.3em;'>${i+1}. ${p.email}${p.isOwner ? ' (Oda Sahibi)' : ''}</div>`;
+        });
+        document.getElementById('room-players-list').innerHTML = html;
+        // Oda sahibi ise "Oyunu Başlat" butonunu göster
+        const user = auth.currentUser;
+        const isOwner = user && room.owner === user.uid;
+        document.getElementById('start-game-btn').style.display = isOwner ? 'block' : 'none';
+        document.getElementById('start-game-btn').onclick = function() {
+          alert('UNO oyunu başlatılacak! (Demo: Oyun mantığı henüz yok)');
+        };
+      });
+      // Odadan çık
+      document.getElementById('leave-room-btn').onclick = function() {
+        const user = auth.currentUser;
+        if (!user) return;
+        db.ref('unoRooms/' + roomId + '/players/' + user.uid).remove().then(() => {
+          document.getElementById('room-lobby').style.display = 'none';
+          loadRoomList();
+        });
+      };
+    }
   </script>
 </body>
 </html> 
