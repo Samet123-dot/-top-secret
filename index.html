@@ -1213,6 +1213,7 @@
        html += `<button id='close-uno-game-btn' class='uno-game-close-btn' title='Kapat'>&times;</button>`;
        if (game.winner) {
          html += `<div style='margin-top:1.5em;font-size:1.2em;color:#43ea7b;font-weight:bold;'>Kazanan: ${room.players[game.winner]?.email.split('@')[0] || 'Bilinmiyor'}</div>`;
+         html += `<button id='restart-uno-btn' class='uno-game-btn' style='margin-top:1em;'>Yeniden Başlat</button>`;
        }
        html += `</div>`;
        modal.innerHTML = html;
@@ -1250,14 +1251,13 @@
          if (!room || !room.game || room.game.turn !== userId) return room;
          const hand = room.game.hands[userId];
          if (!hand || !hand[cardIdx]) return room;
-         // Kart oynanabilir mi?
          const topCard = room.game.pile[room.game.pile.length - 1];
          // Wild kartı için renk kontrolü
          let isWild = card.color === 'wild';
          let valid = false;
          if (isWild) {
            // Sadece chosenColor atanmışsa oynanabilir
-           if (!card.chosenColor) return room;
+           if (!card.chosenColor || !['red','yellow','green','blue'].includes(card.chosenColor)) return room;
            // En üstte wild varsa ve chosenColor atanmışsa, o renge bak
            if ((topCard.value === 'wild' || topCard.value === 'wild4') && topCard.chosenColor) {
              valid = card.chosenColor !== undefined;
@@ -1285,9 +1285,16 @@
          let idx = playerIds.indexOf(userId);
          let dir = room.game.direction;
          let nextIdx = (idx + dir + playerIds.length) % playerIds.length;
-         // Özel kartlar
+         // +2 ve +4 kartı için kart çekme ve pile temizliği
          if (card.value === 'draw2') {
            const nextPlayer = playerIds[nextIdx];
+           if (room.game.deck.length < 2) {
+             // Deste biterse pile'dan yeni deste oluştur
+             let pileToDeck = room.game.pile.slice(0, -1);
+             room.game.pile = [room.game.pile[room.game.pile.length-1]];
+             pileToDeck = shuffleArray(pileToDeck);
+             room.game.deck = room.game.deck.concat(pileToDeck);
+           }
            if (room.game.deck.length >= 2) {
              room.game.hands[nextPlayer].push(room.game.deck.shift(), room.game.deck.shift());
            }
@@ -1299,6 +1306,13 @@
          }
          if (card.value === 'wild4') {
            const nextPlayer = playerIds[nextIdx];
+           if (room.game.deck.length < 4) {
+             // Deste biterse pile'dan yeni deste oluştur
+             let pileToDeck = room.game.pile.slice(0, -1);
+             room.game.pile = [room.game.pile[room.game.pile.length-1]];
+             pileToDeck = shuffleArray(pileToDeck);
+             room.game.deck = room.game.deck.concat(pileToDeck);
+           }
            for (let i = 0; i < 4; i++) {
              if (room.game.deck.length > 0) room.game.hands[nextPlayer].push(room.game.deck.shift());
            }
@@ -1319,7 +1333,14 @@
        const roomRef = db.ref('unoRooms/' + roomId);
        roomRef.transaction(room => {
          if (!room || !room.game || room.game.turn !== userId) return room;
-         if (room.game.deck.length === 0) return room;
+         // Deste biterse pile'dan yeni deste oluştur
+         if (room.game.deck.length === 0) {
+           let pileToDeck = room.game.pile.slice(0, -1);
+           room.game.pile = [room.game.pile[room.game.pile.length-1]];
+           pileToDeck = shuffleArray(pileToDeck);
+           room.game.deck = room.game.deck.concat(pileToDeck);
+         }
+         if (room.game.deck.length === 0) return room; // Hala yoksa
          room.game.hands[userId].push(room.game.deck.shift());
          // Kart çekince sıra geçsin
          const playerIds = Object.keys(room.players);
@@ -1373,6 +1394,15 @@
          picker.style.display = 'none';
          document.body.style.overflow = '';
        };
+     }
+     // Deste karıştırıcı
+     function shuffleArray(arr) {
+       let a = arr.slice();
+       for (let i = a.length - 1; i > 0; i--) {
+         const j = Math.floor(Math.random() * (i + 1));
+         [a[i], a[j]] = [a[j], a[i]];
+       }
+       return a;
      }
   </script>
   <script>
