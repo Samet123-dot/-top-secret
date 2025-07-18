@@ -291,6 +291,7 @@
       box-shadow: 0 2px 10px #7c3aed0a;
       gap: 0.7em;
       min-height: 38px;
+      justify-content: space-between;
     }
     .user-info-icon {
       font-size: 1.15em;
@@ -313,22 +314,35 @@
       display: flex;
       align-items: center;
       opacity: 0.95;
+      flex-shrink: 0;
+      text-align: left;
     }
     .user-info-row span[id^="user-"] {
       font-weight: 700;
       color: #fff;
       font-size: 1.04em;
-      word-break: break-all;
-      overflow-wrap: anywhere;
       margin-left: 0.1em;
       letter-spacing: 0.05px;
       text-shadow: 0 1px 4px #23213633;
       flex: 1;
-      text-align: left;
+      text-align: right;
       line-height: 1.3;
       display: block;
       max-width: 170px;
-      white-space: pre-line;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .user-info-row span[id^="user-"]:hover {
+      white-space: normal;
+      overflow: visible;
+      background: #181a1b;
+      z-index: 10;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px #7c3aed33;
+      padding: 0.1em 0.3em;
+      position: relative;
     }
     .user-info-row span.user-id, .user-info-row span.user-email {
       font-size: 0.97em;
@@ -398,8 +412,8 @@
           </svg>
         </div>
         <div class="user-info-title">Hesap Bilgileri</div>
-        <div class="user-info-row"><span class="user-info-icon">📧</span><span class="user-info-label">E-posta:</span> <span id="user-email" class="user-email">-</span></div>
-        <div class="user-info-row"><span class="user-info-icon">🆔</span><span class="user-info-label">Kullanıcı ID:</span> <span id="user-uid" class="user-id">-</span></div>
+        <div class="user-info-row"><span class="user-info-icon">📧</span><span class="user-info-label">E-posta:</span> <span id="user-email" class="user-email" title="-">-</span></div>
+        <div class="user-info-row"><span class="user-info-icon">🆔</span><span class="user-info-label">Kullanıcı ID:</span> <span id="user-uid" class="user-id" title="-">-</span></div>
         <div class="user-info-row"><span class="user-info-icon">📅</span><span class="user-info-label">Kayıt Tarihi:</span> <span id="user-created">-</span></div>
         <div class="user-info-row"><span class="user-info-icon">⏰</span><span class="user-info-label">Son Giriş:</span> <span id="user-lastlogin">-</span></div>
       </div>
@@ -565,7 +579,9 @@
         document.getElementById('chat-container').style.display = 'flex';
         // Kullanıcı bilgilerini göster
         document.getElementById('user-email').textContent = user.email || '-';
+        document.getElementById('user-email').title = user.email || '-';
         document.getElementById('user-uid').textContent = user.uid || '-';
+        document.getElementById('user-uid').title = user.uid || '-';
         document.getElementById('user-created').textContent = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleString('tr-TR') : '-';
         document.getElementById('user-lastlogin').textContent = user.metadata && user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString('tr-TR') : '-';
       } else {
