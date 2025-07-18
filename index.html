@@ -413,6 +413,7 @@
     @media (max-width: 600px) {
       .uno-card { width: 44px; height: 66px; font-size: 1.2em; border-radius: 10px; }
     }
+    /* UNO modal ve el için responsive ve scrollable iyileştirme */
     .uno-game-modal-content {
       background: #232136;
       padding: 2em 2.5em;
@@ -420,10 +421,44 @@
       box-shadow: 0 8px 32px #7c3aed33;
       min-width: 320px;
       max-width: 98vw;
+      max-height: 90vh;
       position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow-y: auto;
+    }
+    .uno-game-hand {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 1.2em;
+      gap: 0.1em;
+      overflow-x: auto;
+      max-width: 90vw;
+      padding-bottom: 0.5em;
+      scrollbar-color: #ff9800 #232136;
+      scrollbar-width: thin;
+    }
+    .uno-game-hand::-webkit-scrollbar {
+      height: 10px;
+      background: #232136;
+    }
+    .uno-game-hand::-webkit-scrollbar-thumb {
+      background: #ff9800;
+      border-radius: 8px;
+    }
+    @media (max-width: 600px) {
+      .uno-game-modal-content {
+        padding: 1em 0.2em;
+        min-width: unset;
+        max-width: 100vw;
+        max-height: 98vh;
+      }
+      .uno-game-hand {
+        max-width: 98vw;
+      }
     }
     .uno-game-pile {
       display: flex;
@@ -431,14 +466,6 @@
       justify-content: center;
       margin-bottom: 1.2em;
       gap: 1.2em;
-    }
-    .uno-game-hand {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.2em;
-      gap: 0.1em;
     }
     .uno-game-players {
       display: flex;
