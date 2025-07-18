@@ -371,12 +371,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 64px;
-      height: 96px;
+      width: 72px;
+      height: 112px;
       margin: 0.18em 0.22em;
-      border-radius: 16px;
+      border-radius: 18px;
       box-shadow: 0 4px 18px #0006, 0 1.5px 0 #23272b, 0 0 0 3px #fff8;
-      font-size: 2.1em;
+      font-size: 2.2em;
       font-weight: bold;
       color: #fff;
       cursor: pointer;
@@ -386,6 +386,7 @@
       user-select: none;
       background: #232136;
       text-shadow: 0 2px 8px #000b, 0 1px 0 #fff8;
+      box-sizing: border-box;
     }
     .uno-card.red    { background: linear-gradient(135deg, #ff2d2d 60%, #b71c1c 100%); border-color: #ff2d2d; }
     .uno-card.yellow { background: linear-gradient(135deg, #ffe600 60%, #ffb300 100%); color: #232136; border-color: #ffe600; text-shadow: 0 2px 8px #fff8, 0 1px 0 #0004; }
@@ -393,7 +394,7 @@
     .uno-card.blue   { background: linear-gradient(135deg, #2196f3 60%, #0d47a1 100%); border-color: #2196f3; }
     .uno-card.wild   { background: linear-gradient(135deg, #444 60%, #232136 100%); border: 3px solid #ff9800; }
     .uno-card .uno-value {
-      font-size: 1.2em;
+      font-size: 1.3em;
       font-weight: bold;
       margin-bottom: 0.1em;
       letter-spacing: 1px;
@@ -404,7 +405,7 @@
       text-shadow: 0 2px 8px #fff8, 0 1px 0 #0004;
     }
     .uno-card .uno-icon {
-      font-size: 1.3em;
+      font-size: 1.4em;
       margin-top: 0.1em;
       text-shadow: 0 2px 8px #000b, 0 1px 0 #fff8;
     }
@@ -416,7 +417,7 @@
       z-index: 2;
     }
     @media (max-width: 600px) {
-      .uno-card { width: 44px; height: 66px; font-size: 1.2em; border-radius: 10px; }
+      .uno-card { width: 40px; height: 62px; font-size: 1em; border-radius: 9px; }
     }
     /* UNO modal ve el için responsive ve scrollable iyileştirme */
     .uno-game-modal-content {
