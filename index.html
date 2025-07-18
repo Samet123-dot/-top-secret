@@ -611,17 +611,59 @@
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
+    let chatCooldown = false;
+    let cooldownTimeout = null;
+    // Cooldown uyarısı için bir div ekle
+    let cooldownDiv = document.getElementById('chat-cooldown');
+    if (!cooldownDiv) {
+      cooldownDiv = document.createElement('div');
+      cooldownDiv.id = 'chat-cooldown';
+      cooldownDiv.style.color = '#ff9800';
+      cooldownDiv.style.fontWeight = 'bold';
+      cooldownDiv.style.textAlign = 'center';
+      cooldownDiv.style.margin = '0.3em 0 0.2em 0';
+      cooldownDiv.style.minHeight = '1.2em';
+      chatForm.parentNode.insertBefore(cooldownDiv, chatForm);
+    }
     chatForm.addEventListener('submit', function(e) {
       e.preventDefault();
+      if (chatCooldown) return;
       ensureUsername();
       const text = chatInput.value.trim();
       if (!text) return;
-      db.ref('messages').push({
-        user: username,
-        text: text,
-        time: Date.now()
-      });
+      if (text === '/clear') {
+        // Mesajları sil
+        db.ref('messages').remove().then(() => {
+          chatMessages.innerHTML = '';
+          cooldownDiv.textContent = 'Sohbet temizlendi!';
+          setTimeout(() => { cooldownDiv.textContent = ''; }, 2000);
+        });
+      } else {
+        db.ref('messages').push({
+          user: username,
+          text: text,
+          time: Date.now()
+        });
+      }
       chatInput.value = '';
+      // 5 saniye cooldown başlat
+      chatCooldown = true;
+      chatInput.disabled = true;
+      chatForm.querySelector('button[type="submit"]').disabled = true;
+      let remaining = 5;
+      cooldownDiv.textContent = `${remaining} saniye bekleyin...`;
+      cooldownTimeout = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+          cooldownDiv.textContent = `${remaining} saniye bekleyin...`;
+        } else {
+          clearInterval(cooldownTimeout);
+          chatCooldown = false;
+          chatInput.disabled = false;
+          chatForm.querySelector('button[type="submit"]').disabled = false;
+          cooldownDiv.textContent = '';
+        }
+      }, 1000);
     });
     // Mesajları dinle ve ekrana yaz
     db.ref('messages').limitToLast(50).on('child_added', function(snapshot) {
