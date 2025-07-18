@@ -983,7 +983,16 @@
        document.getElementById('leave-room-btn').onclick = function() {
          const user = auth.currentUser;
          if (!user) return;
-         db.ref('unoRooms/' + roomId + '/players/' + user.uid).remove().then(() => {
+         const playerRef = db.ref('unoRooms/' + roomId + '/players/' + user.uid);
+         playerRef.remove().then(() => {
+           // Oda boş mu kontrol et
+           db.ref('unoRooms/' + roomId + '/players').once('value', snap => {
+             const players = snap.val();
+             if (!players || Object.keys(players).length === 0) {
+               // Odayı tamamen sil
+               db.ref('unoRooms/' + roomId).remove();
+             }
+           });
            document.getElementById('room-lobby').style.display = 'none';
            loadRoomList();
          });
