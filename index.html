@@ -1021,6 +1021,17 @@
         btn.style.marginTop = '0.7em';
         btn.onclick = showUnoLobby;
         document.querySelector('.chat-card').appendChild(btn);
+
+        // X O X Oyna butonu
+        const xoBtn = document.createElement('button');
+        xoBtn.id = 'go-to-xo-btn';
+        xoBtn.textContent = 'X O X Oyna';
+        xoBtn.className = 'logout-btn';
+        xoBtn.style.marginTop = '0.7em';
+        xoBtn.onclick = function() {
+          alert('X O oyunu yakında!');
+        };
+        document.querySelector('.chat-card').appendChild(xoBtn);
       }
     });
     // Oda oluşturma
