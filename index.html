@@ -725,6 +725,25 @@
       };
     }
 
+    // Özel sohbet UI'sini sadece ana chat ekranında göster
+    function showPrivateChatUI(show) {
+      var el = document.getElementById('private-chat-ui');
+      if (el) el.style.display = show ? 'block' : 'none';
+    }
+    // Giriş/kayıt ve chat ekranı geçişlerinde chat-container ve özel sohbet UI kontrolü
+    function showChatScreen(show) {
+      var chat = document.getElementById('chat-container');
+      var auth = document.getElementById('auth-container');
+      if (show) {
+        if (auth) auth.style.display = 'none';
+        if (chat) chat.style.display = 'flex';
+        showPrivateChatUI(true);
+      } else {
+        if (chat) chat.style.display = 'none';
+        if (auth) auth.style.display = 'block';
+        showPrivateChatUI(false);
+      }
+    }
     // Oturum kontrolü: Sayfa yüklenince girişli mi kontrol et
     auth.onAuthStateChanged(function(user) {
       if (user) {
@@ -754,10 +773,12 @@
         document.getElementById('user-info-panel').innerHTML = userInfoHtml;
         document.getElementById('user-info-modal').innerHTML = userInfoHtml;
         showPrivateChatUI(true);
+        showChatScreen(true);
       } else {
         document.getElementById('chat-container').style.display = 'none';
         document.getElementById('auth-container').style.display = 'block';
         showPrivateChatUI(false);
+        showChatScreen(false);
       }
     });
    // Bilgi butonu ve modal açma/kapama
