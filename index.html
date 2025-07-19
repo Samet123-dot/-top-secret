@@ -735,9 +735,11 @@
         `;
         document.getElementById('user-info-panel').innerHTML = userInfoHtml;
         document.getElementById('user-info-modal').innerHTML = userInfoHtml;
+        showPrivateChatUI(true);
       } else {
         document.getElementById('chat-container').style.display = 'none';
         document.getElementById('auth-container').style.display = 'block';
+        showPrivateChatUI(false);
       }
     });
    // Bilgi butonu ve modal açma/kapama
@@ -1386,5 +1388,23 @@
       privateChatTitle.textContent = '';
     };
   </script>
+  <!-- Sağda sabit özel sohbet açma butonu ve modalı sadece ana chat ekranında göster -->
+  <div id="private-chat-ui" style="display:none;">
+    <button id="show-private-chat-btn" title="Özel Sohbet" style="position:fixed;right:24px;bottom:100px;z-index:1001;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;"><span style="font-size:2.1rem;color:#fff;">🔒</span></button>
+    <div id="private-chat-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.85);z-index:1000;"></div>
+    <div class="chat-card" id="private-chat-card" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;max-width:98vw;width:98vw;max-height:96vh;overflow:auto;">
+      <div id="private-chat-join" style="margin-bottom:1em;max-width:420px;margin-left:auto;margin-right:auto;">
+        <input id="private-code-input" type="text" placeholder="Kanal kodu gir..." maxlength="20" style="padding:0.5em;border-radius:8px;border:1.5px solid #7c3aed;">
+        <button id="join-private-btn" style="padding:0.5em 1em;border-radius:8px;background:#7c3aed;color:#fff;font-weight:bold;border:none;cursor:pointer;">Özel Sohbete Katıl</button>
+      </div>
+      <div class="chat-title" id="private-chat-title"></div>
+      <div id="private-chat-messages" class="chat-messages" style="min-height:120px;"></div>
+      <form id="private-chat-form" class="chat-form" autocomplete="off">
+        <input id="private-chat-input" type="text" placeholder="Özel mesaj..." maxlength="300" required />
+        <button type="submit" id="private-chat-send" class="auth-btn">Gönder</button>
+      </form>
+      <button id="leave-private-btn" class="logout-btn" style="margin-top:0.7em;background:#232136;color:#ff9800;border:2px solid #ff9800;">Odadan Çık</button>
+    </div>
+  </div>
 </body>
 </html> 
