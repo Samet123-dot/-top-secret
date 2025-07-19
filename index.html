@@ -365,6 +365,44 @@
         overflow-y: visible;
       }
     }
+    @media (max-width: 900px) {
+      .chat-card {
+        max-width: 98vw;
+        padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+        border-radius: 18px;
+        height: auto;
+        min-width: unset;
+        margin: 0 auto 1.2rem auto;
+      }
+      .chat-messages { font-size: 1rem; padding: 0.7rem; }
+      .chat-message { font-size: 1rem; padding: 0.6em 0.8em; }
+      #private-chat-card {
+        max-width: 98vw;
+        min-width: unset;
+        margin: 0 auto 1.2rem auto;
+        padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+        border-radius: 18px;
+      }
+      #private-chat-form, .chat-form {
+        flex-direction: column;
+        gap: 0.5em;
+      }
+      #private-chat-input, #private-chat-send, #chat-input, #chat-send {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #private-chat-join {
+        max-width: 98vw;
+        margin: 0 auto 1.2rem auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+      }
+      #private-code-input, #join-private-btn {
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
   </style>
 </head>
 <body>
