@@ -1221,7 +1221,7 @@
     const privateChatForm = document.getElementById('private-chat-form');
     const privateChatInput = document.getElementById('private-chat-input');
     const leavePrivateBtn = document.getElementById('leave-private-btn');
-    let privateChatListener = null;
+    let privateChatListenerRef = null;
 
     joinPrivateBtn.onclick = function() {
       const code = privateCodeInput.value.trim();
@@ -1231,14 +1231,15 @@
       privateChatCard.style.display = 'block';
       privateChatJoinDiv.style.display = 'none';
       privateChatMessages.innerHTML = '';
-      // Dinleyici ekle
-      if (privateChatListener) privateChatListener.off();
-      privateChatListener = db.ref('privateChats/' + code).limitToLast(50);
-      privateChatListener.on('child_added', function(snapshot) {
+      // Eski dinleyiciyi kaldır
+      if (privateChatListenerRef) privateChatListenerRef.off();
+      // Yeni dinleyici ekle
+      privateChatListenerRef = db.ref('privateChats/' + code);
+      privateChatListenerRef.limitToLast(50).on('child_added', function(snapshot) {
         const msg = snapshot.val();
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-message';
-        msgDiv.innerHTML = `<span class=\"chat-user\">${msg.user}:</span> <span class=\"chat-text\">${msg.text}</span>`;
+        msgDiv.innerHTML = `<span class="chat-user">${msg.user}:</span> <span class="chat-text">${msg.text}</span>`;
         privateChatMessages.appendChild(msgDiv);
         privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
       });
@@ -1259,7 +1260,7 @@
     };
 
     leavePrivateBtn.onclick = function() {
-      if (privateChatListener) privateChatListener.off();
+      if (privateChatListenerRef) privateChatListenerRef.off();
       privateChatCode = null;
       privateChatCard.style.display = 'none';
       privateChatJoinDiv.style.display = 'block';
