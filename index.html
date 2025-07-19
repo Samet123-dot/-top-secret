@@ -533,19 +533,18 @@
       const password = document.getElementById('login-password').value;
       const errorDiv = document.getElementById('login-error');
       errorDiv.textContent = '';
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          errorDiv.style.color = '#43ea7b';
-          errorDiv.textContent = 'Giriş başarılı!';
-          setTimeout(() => {
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('chat-container').style.display = 'flex';
-          }, 700);
-        })
-        .catch(err => {
-          errorDiv.style.color = '#ff6b6b';
-          errorDiv.textContent = err.message;
-        });
+      // 6 haneli kod üret
+      const code = Math.floor(100000 + Math.random() * 900000);
+      // EmailJS ile kodu gönder
+      emailjs.send("service_a1d2neu", "template_3r4mr8b", {
+        to_email: email,
+        code: code
+      })
+      .then(function() {
+        showLoginCodeModal(code, email, password);
+      }, function(error) {
+        errorDiv.textContent = "Kod gönderilemedi: " + error.text;
+      });
     });
 
     // Kayıt
@@ -632,6 +631,76 @@
         }
       };
       modal.querySelector('#verify-cancel-btn').onclick = function() {
+        clearInterval(interval);
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      };
+    }
+
+    // Girişte 2 Adımlı Kod Doğrulama
+    function showLoginCodeModal(expectedCode, email, password) {
+      let modal = document.getElementById('login-verify-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'login-verify-modal';
+        modal.innerHTML = `
+          <div class="verify-modal-bg"></div>
+          <div class="verify-modal-content dark-modal">
+            <h4>Giriş Doğrulama</h4>
+            <p>Mail adresinize gönderilen <span style="color:#ff9800;font-weight:bold">6 haneli kodu</span> girin:</p>
+            <input id="login-verify-code-input" type="text" maxlength="6" pattern="[0-9]{6}" style="font-size:1.3rem;text-align:center;letter-spacing:0.3em;padding:0.5em 1em;border-radius:8px;border:1.5px solid #7c3aed;width:80%;margin-bottom:1em;background:#181a1b;color:#fff;" autofocus />
+            <div id="login-verify-timer" style="margin-bottom:1em;color:#ff9800;font-weight:bold;font-size:1.1rem;">30</div>
+            <button id="login-verify-submit-btn" style="background:linear-gradient(90deg,#7c3aed 0%,#ff9800 100%);color:#fff;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;">Doğrula</button>
+            <button id="login-verify-cancel-btn" style="background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:8px;padding:0.6em 1.2em;cursor:pointer;margin-left:1em;">İptal</button>
+            <div id="login-verify-error" style="color:#ff6b6b;margin-top:0.7em;"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } else {
+        modal.style.display = 'block';
+      }
+      document.body.style.overflow = 'hidden';
+      let timer = 30;
+      const timerEl = modal.querySelector('#login-verify-timer');
+      const errorEl = modal.querySelector('#login-verify-error');
+      timerEl.textContent = timer;
+      errorEl.textContent = '';
+      modal.querySelector('#login-verify-code-input').value = '';
+      modal.querySelector('#login-verify-submit-btn').disabled = false;
+      let interval = setInterval(() => {
+        timer--;
+        timerEl.textContent = timer;
+        if (timer <= 0) {
+          clearInterval(interval);
+          errorEl.textContent = 'Süre doldu. Lütfen tekrar giriş yapın.';
+          modal.querySelector('#login-verify-submit-btn').disabled = true;
+        }
+      }, 1000);
+      modal.querySelector('#login-verify-submit-btn').onclick = function() {
+        const val = modal.querySelector('#login-verify-code-input').value.trim();
+        if (val === expectedCode.toString()) {
+          clearInterval(interval);
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+          // Giriş işlemini tamamla
+          firebase.auth().signInWithEmailAndPassword(email, password)
+            .then(() => {
+              document.getElementById('login-error').style.color = '#43ea7b';
+              document.getElementById('login-error').textContent = 'Giriş başarılı!';
+              setTimeout(() => {
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('chat-container').style.display = 'flex';
+              }, 700);
+            })
+            .catch(err => {
+              document.getElementById('login-error').style.color = '#ff6b6b';
+              document.getElementById('login-error').textContent = err.message;
+            });
+        } else {
+          errorEl.textContent = 'Kod yanlış!';
+        }
+      };
+      modal.querySelector('#login-verify-cancel-btn').onclick = function() {
         clearInterval(interval);
         modal.style.display = 'none';
         document.body.style.overflow = '';
