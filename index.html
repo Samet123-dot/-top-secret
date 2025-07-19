@@ -412,6 +412,19 @@
     <div id="user-info-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:1000;"></div>
     <div id="user-info-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;"></div>
   </div>
+  <div id="private-chat-join" style="margin-bottom:1em;">
+    <input id="private-code-input" type="text" placeholder="Kanal kodu gir..." maxlength="20" style="padding:0.5em;border-radius:8px;border:1.5px solid #7c3aed;">
+    <button id="join-private-btn" style="padding:0.5em 1em;border-radius:8px;background:#7c3aed;color:#fff;font-weight:bold;border:none;cursor:pointer;">Özel Sohbete Katıl</button>
+  </div>
+  <div id="private-chat-container" style="display:none;">
+    <div id="private-chat-title" style="color:#ff9800;font-weight:bold;margin-bottom:0.5em;"></div>
+    <div id="private-chat-messages" style="height:200px;overflow-y:auto;background:#181a1b;border-radius:10px;padding:1em;margin-bottom:0.5em;"></div>
+    <form id="private-chat-form" style="display:flex;gap:0.5em;">
+      <input id="private-chat-input" type="text" placeholder="Özel mesaj..." maxlength="300" style="flex:1;border-radius:8px;border:1.5px solid #7c3aed;padding:0.5em;">
+      <button type="submit" style="padding:0.5em 1em;border-radius:8px;background:#7c3aed;color:#fff;font-weight:bold;border:none;cursor:pointer;">Gönder</button>
+    </form>
+    <button id="leave-private-btn" style="margin-top:0.5em;padding:0.4em 1em;border-radius:8px;background:#232136;color:#ff9800;font-weight:bold;border:none;cursor:pointer;">Odadan Çık</button>
+  </div>
   <div id="xox-lobby-container" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#181a1b;">
     <div class="auth-card" style="max-width:440px;width:100%;margin-bottom:2rem;">
       <div class="auth-title">XOX Odaları</div>
@@ -1194,6 +1207,64 @@
       const xoBtn = document.getElementById('go-to-xo-btn');
       if (xoBtn) xoBtn.onclick = showXOXLobby;
     });
+  </script>
+  <script>
+    // --- Özel Sohbet (Telsiz) Özelliği ---
+    let privateChatCode = null;
+    const privateChatJoinDiv = document.getElementById('private-chat-join');
+    const privateCodeInput = document.getElementById('private-code-input');
+    const joinPrivateBtn = document.getElementById('join-private-btn');
+    const privateChatContainer = document.getElementById('private-chat-container');
+    const privateChatTitle = document.getElementById('private-chat-title');
+    const privateChatMessages = document.getElementById('private-chat-messages');
+    const privateChatForm = document.getElementById('private-chat-form');
+    const privateChatInput = document.getElementById('private-chat-input');
+    const leavePrivateBtn = document.getElementById('leave-private-btn');
+    let privateChatListener = null;
+
+    joinPrivateBtn.onclick = function() {
+      const code = privateCodeInput.value.trim();
+      if (!code) return alert('Kanal kodu girin!');
+      privateChatCode = code;
+      privateChatTitle.textContent = 'Özel Sohbet: #' + code;
+      privateChatContainer.style.display = 'block';
+      privateChatJoinDiv.style.display = 'none';
+      privateChatMessages.innerHTML = '';
+      // Dinleyici ekle
+      if (privateChatListener) privateChatListener.off();
+      privateChatListener = db.ref('privateChats/' + code).limitToLast(50);
+      privateChatListener.on('child_added', function(snapshot) {
+        const msg = snapshot.val();
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-message';
+        msgDiv.innerHTML = `<span class="chat-user">${msg.user}:</span> <span class="chat-text">${msg.text}</span>`;
+        privateChatMessages.appendChild(msgDiv);
+        privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
+      });
+    };
+
+    privateChatForm.onsubmit = function(e) {
+      e.preventDefault();
+      if (!privateChatCode) return;
+      ensureUsername();
+      const text = privateChatInput.value.trim();
+      if (!text) return;
+      db.ref('privateChats/' + privateChatCode).push({
+        user: username,
+        text: text,
+        time: Date.now()
+      });
+      privateChatInput.value = '';
+    };
+
+    leavePrivateBtn.onclick = function() {
+      if (privateChatListener) privateChatListener.off();
+      privateChatCode = null;
+      privateChatContainer.style.display = 'none';
+      privateChatJoinDiv.style.display = 'block';
+      privateChatMessages.innerHTML = '';
+      privateChatTitle.textContent = '';
+    };
   </script>
 </body>
 </html> 
