@@ -1427,5 +1427,13 @@
       privateChatTitle.textContent = '';
     };
   </script>
+  <script>
+window.onload = function() {
+  var chat = document.getElementById('chat-container');
+  var privateUI = document.getElementById('private-chat-ui');
+  if (chat) chat.style.display = 'none';
+  if (privateUI) privateUI.style.display = 'none';
+};
+  </script>
 </body>
 </html> 
