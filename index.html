@@ -741,14 +741,20 @@
     let onlineUserKey = null;
     function setOnlineUser() {
       ensureUsername();
-      // Kullanıcıyı online olarak ekle
-      const userRef = db.ref('onlineUsers').push({
-        username: username,
-        time: Date.now()
+      // Önce aynı kullanıcı adını taşıyan eski kayıtları sil
+      db.ref('onlineUsers').orderByChild('username').equalTo(username).once('value', function(snapshot) {
+        snapshot.forEach(function(child) {
+          child.ref.remove();
+        });
+        // Sonra yeni kaydı ekle
+        const userRef = db.ref('onlineUsers').push({
+          username: username,
+          time: Date.now()
+        });
+        onlineUserKey = userRef.key;
+        // Bağlantı kesilirse otomatik sil
+        userRef.onDisconnect().remove();
       });
-      onlineUserKey = userRef.key;
-      // Bağlantı kesilirse otomatik sil
-      userRef.onDisconnect().remove();
     }
     function removeOnlineUser() {
       if (onlineUserKey) {
