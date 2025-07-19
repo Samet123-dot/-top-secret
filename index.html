@@ -845,6 +845,13 @@
           cooldownDiv.textContent = 'Sohbet temizlendi!';
           setTimeout(() => { cooldownDiv.textContent = ''; }, 2000);
         });
+      } else if (text === '/start') {
+        fetch('https://top-scr-bot-web.samet06.repl.co/start-bot', { method: 'POST' })
+          .then(res => res.text())
+          .then(msg => {
+            cooldownDiv.textContent = msg;
+            setTimeout(() => { cooldownDiv.textContent = ''; }, 2000);
+          });
       } else {
         db.ref('messages').push({
           user: username,
