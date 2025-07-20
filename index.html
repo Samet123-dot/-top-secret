@@ -1229,13 +1229,91 @@
           alert('Lütfen bir kod girin!');
           return;
         }
-        alert('Girilen kod: ' + code);
         closeSpecialChatModal();
+        openPrivateChatModal(code);
       };
     };
     function closeSpecialChatModal() {
       specialChatModalBg.style.display = 'none';
       specialChatModal.style.display = 'none';
+    }
+  </script>
+  <script>
+    // Özel chat koduna özel chat modalı
+    function openPrivateChatModal(code) {
+      // Modal arka planı
+      let bg = document.getElementById('private-chat-modal-bg');
+      let modal = document.getElementById('private-chat-modal');
+      if (!bg) {
+        bg = document.createElement('div');
+        bg.id = 'private-chat-modal-bg';
+        bg.style = 'display:block;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.85);z-index:3000;';
+        document.body.appendChild(bg);
+      } else {
+        bg.style.display = 'block';
+      }
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'private-chat-modal';
+        modal.style = 'display:block;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3001;min-width:320px;max-width:98vw;';
+        document.body.appendChild(modal);
+      } else {
+        modal.style.display = 'block';
+      }
+      document.body.style.overflow = 'hidden';
+      // Modal içeriği
+      modal.innerHTML = `
+        <div style="background:#232136;padding:2.2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;display:flex;flex-direction:column;align-items:center;">
+          <div style='font-size:1.2em;font-weight:bold;color:#ff9800;margin-bottom:0.7em;'>Özel Chat - Kod: <span style='color:#43ea7b;'>${code}</span></div>
+          <div id='private-chat-messages' style='width:100%;height:220px;max-height:220px;overflow-y:auto;background:#181a1b;border-radius:10px;padding:1em 0.7em;margin-bottom:1em;color:#fff;text-align:left;font-size:1.05em;box-shadow:0 2px 8px #7c3aed22;'></div>
+          <form id='private-chat-form' style='display:flex;gap:0.5em;width:100%;'>
+            <input id='private-chat-input' type='text' maxlength='300' placeholder='Mesajınızı yazın...' required style='flex:1;border-radius:10px;border:1.5px solid #7c3aed;background:#181a1b;color:#fff;padding:0.6em 1em;font-size:1.08rem;outline:none;'/>
+            <button type='submit' style='background:linear-gradient(90deg,#7c3aed 0%,#ff9800 100%);color:#fff;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;'>Gönder</button>
+          </form>
+          <button id='private-chat-close-btn' style='margin-top:1em;background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;'>Kapat</button>
+        </div>
+      `;
+      // Kapatma
+      document.getElementById('private-chat-close-btn').onclick = function() {
+        bg.style.display = 'none';
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        if (window.privateChatListener) window.privateChatListener.off();
+      };
+      bg.onclick = function(e) {
+        if (e.target === bg) {
+          bg.style.display = 'none';
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+          if (window.privateChatListener) window.privateChatListener.off();
+        }
+      };
+      // Mesaj gönderme
+      const privateChatForm = document.getElementById('private-chat-form');
+      const privateChatInput = document.getElementById('private-chat-input');
+      const privateChatMessages = document.getElementById('private-chat-messages');
+      let username = localStorage.getItem('chat-username') || 'Kullanıcı';
+      privateChatForm.onsubmit = function(e) {
+        e.preventDefault();
+        const text = privateChatInput.value.trim();
+        if (!text) return;
+        firebase.database().ref('privateChats/' + code).push({
+          user: username,
+          text: text,
+          time: Date.now()
+        });
+        privateChatInput.value = '';
+      };
+      // Mesajları dinle
+      if (window.privateChatListener) window.privateChatListener.off();
+      window.privateChatListener = firebase.database().ref('privateChats/' + code);
+      window.privateChatListener.limitToLast(50).on('child_added', function(snapshot) {
+        const msg = snapshot.val();
+        const msgDiv = document.createElement('div');
+        msgDiv.innerHTML = `<span style='color:#ff9800;font-weight:bold;'>${msg.user}:</span> <span style='color:#fff;'>${msg.text}</span>`;
+        privateChatMessages.appendChild(msgDiv);
+        privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
+      });
     }
   </script>
 </body>
