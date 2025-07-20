@@ -15,6 +15,8 @@
   <meta name="twitter:image" content="favicon.png" />
   <meta name="theme-color" content="#232136" />
   <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -380,9 +382,20 @@
   </style>
 </head>
 <body>
-  <div style="width:100vw;text-align:center;padding:1.2em 0 0.2em 0;">
+  <div style="width:100vw;text-align:center;padding:1.2em 0 0.2em 0;display:flex;align-items:center;justify-content:center;gap:1.2em;">
     <span style="font-size:2.2rem;font-weight:bold;color:#ff9800;letter-spacing:2px;text-shadow:0 2px 8px #7c3aed33;">Top-Secret</span>
+    <button id="theme-toggle-btn" title="Tema Değiştir" style="margin-left:1em;font-size:1.3em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#ff9800;cursor:pointer;">🌙</button>
+    <button id="lang-toggle-btn" title="Dili Değiştir" style="margin-left:0.5em;font-size:1.1em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#43ea7b;cursor:pointer;">EN</button>
   </div>
+  <div id="welcome-msg" style="text-align:center;font-size:1.1em;color:#43ea7b;font-weight:bold;margin-bottom:0.5em;display:none;"></div>
+  <div id="toast-container" style="position:fixed;top:24px;right:24px;z-index:5000;display:flex;flex-direction:column;gap:0.7em;"></div>
+  <div id="scroll-top-btn" title="Yukarı Çık" style="display:none;position:fixed;right:32px;bottom:180px;z-index:1002;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;color:#fff;"><span>↑</span></div>
+  <div id="about-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:4000;"></div>
+  <div id="about-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4001;background:#232136;padding:2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;color:#fff;"></div>
+  <div id="shortcuts-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:4100;"></div>
+  <div id="shortcuts-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4101;background:#232136;padding:2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;color:#fff;"></div>
+  <div id="loading-spinner" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:6000;background:rgba(24,26,27,0.45);align-items:center;justify-content:center;"><div style="border:6px solid #7c3aed;border-top:6px solid #ff9800;border-radius:50%;width:60px;height:60px;animation:spin 1s linear infinite;"></div></div>
+  <style>@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}</style>
   <div class="auth-card" id="auth-container">
     <div class="auth-title" id="form-title">Top-Secret</div>
     <form class="auth-form" id="login-form" autocomplete="off">
@@ -1334,6 +1347,87 @@
   <!-- Sayfa sonu footer -->
   <footer style="width:100vw;text-align:center;padding:1.2em 0 1.2em 0;background:#232136;color:#fff;font-size:1em;letter-spacing:1px;opacity:0.85;margin-top:2em;">
     © 2024 Top-Secret | Güvenli Sohbet ve Oyun Platformu
+    · <a href="#" id="about-link" style="color:#ff9800;text-decoration:underline;">Hakkında</a>
+    · <a href="#" id="terms-link" style="color:#ff9800;text-decoration:underline;">Kullanım Koşulları</a>
+    · <a href="#" id="shortcuts-link" style="color:#43ea7b;text-decoration:underline;">Kısayollar</a>
   </footer>
+  <script>
+    // Tema değiştirme
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    let darkMode = true;
+    themeBtn.onclick = function() {
+      darkMode = !darkMode;
+      document.body.style.background = darkMode ? '#181a1b' : '#f5f5f7';
+      document.body.style.color = darkMode ? '#f5f5f7' : '#232136';
+      themeBtn.textContent = darkMode ? '🌙' : '☀️';
+      showToast(darkMode ? 'Karanlık mod aktif' : 'Açık mod aktif');
+    };
+    // Dil değiştirme
+    const langBtn = document.getElementById('lang-toggle-btn');
+    let lang = 'TR';
+    langBtn.onclick = function() {
+      lang = lang === 'TR' ? 'EN' : 'TR';
+      langBtn.textContent = lang === 'TR' ? 'EN' : 'TR';
+      showToast(lang === 'TR' ? 'Dil: Türkçe' : 'Language: English');
+      // Burada arayüz metinlerini değiştirebilirsin (örnek olarak toast gösteriliyor)
+    };
+    // Yukarı çık butonu
+    const scrollBtn = document.getElementById('scroll-top-btn');
+    window.onscroll = function() {
+      scrollBtn.style.display = window.scrollY > 200 ? 'flex' : 'none';
+    };
+    scrollBtn.onclick = function() {
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+    // Hakkında ve kullanım koşulları modalı
+    const aboutLink = document.getElementById('about-link');
+    const termsLink = document.getElementById('terms-link');
+    const aboutModalBg = document.getElementById('about-modal-bg');
+    const aboutModal = document.getElementById('about-modal');
+    aboutLink.onclick = function(e){e.preventDefault();aboutModalBg.style.display='block';aboutModal.style.display='block';aboutModal.innerHTML='<h2>Hakkında</h2><p>Top-Secret, güvenli ve modern bir sohbet, özel chat ve oyun platformudur. Tüm verileriniz gizli tutulur.</p><button onclick="closeAboutModal()" style="margin-top:1em;background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;">Kapat</button>';};
+    termsLink.onclick = function(e){e.preventDefault();aboutModalBg.style.display='block';aboutModal.style.display='block';aboutModal.innerHTML='<h2>Kullanım Koşulları</h2><p>Bu siteyi kullanarak gizlilik ve güvenlik kurallarını kabul etmiş olursunuz. Kötüye kullanım tespit edilirse erişim engellenebilir.</p><button onclick="closeAboutModal()" style="margin-top:1em;background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;">Kapat</button>';};
+    aboutModalBg.onclick = closeAboutModal;
+    function closeAboutModal(){aboutModalBg.style.display='none';aboutModal.style.display='none';}
+    // Kısayollar modalı
+    const shortcutsLink = document.getElementById('shortcuts-link');
+    const shortcutsModalBg = document.getElementById('shortcuts-modal-bg');
+    const shortcutsModal = document.getElementById('shortcuts-modal');
+    shortcutsLink.onclick = function(e){e.preventDefault();shortcutsModalBg.style.display='block';shortcutsModal.style.display='block';shortcutsModal.innerHTML='<h2>Klavye Kısayolları</h2><ul style="text-align:left;max-width:320px;margin:0 auto 1em auto;"><li><b>Enter</b>: Mesaj gönder</li><li><b>ESC</b>: Modal kapat</li><li><b>Ctrl+K</b>: Arama (varsa)</li></ul><button onclick="closeShortcutsModal()" style="margin-top:1em;background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;">Kapat</button>';};
+    shortcutsModalBg.onclick = closeShortcutsModal;
+    function closeShortcutsModal(){shortcutsModalBg.style.display='none';shortcutsModal.style.display='none';}
+    // Hoşgeldin mesajı (giriş yapan kullanıcıya)
+    function showWelcomeMsg(){
+      const user = firebase.auth().currentUser;
+      const msgDiv = document.getElementById('welcome-msg');
+      if(user && user.email){
+        msgDiv.textContent = 'Hoşgeldin, ' + (user.email.split('@')[0]) + '!';
+        msgDiv.style.display = 'block';
+      }else{
+        msgDiv.style.display = 'none';
+      }
+    }
+    firebase.auth().onAuthStateChanged(showWelcomeMsg);
+    // Toast bildirim sistemi
+    function showToast(msg){
+      const toastC = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.textContent = msg;
+      toast.style = 'background:#232136;color:#ff9800;padding:0.8em 1.4em;border-radius:10px;box-shadow:0 2px 8px #7c3aed33;font-weight:bold;font-size:1.08em;opacity:0.97;';
+      toastC.appendChild(toast);
+      setTimeout(()=>{toast.style.opacity='0.2';},1800);
+      setTimeout(()=>{toast.remove();},2400);
+    }
+    // Loading spinner göster/gizle fonksiyonu
+    function showLoadingSpinner(show){
+      document.getElementById('loading-spinner').style.display = show ? 'flex' : 'none';
+    }
+    // ESC ile modal kapama
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'){
+        closeAboutModal();
+        closeShortcutsModal();
+      }
+    });
+  </script>
 </body>
 </html> 
