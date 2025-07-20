@@ -1223,6 +1223,15 @@
       document.getElementById('special-chat-code-input').focus();
       document.getElementById('special-chat-cancel-btn').onclick = closeSpecialChatModal;
       specialChatModalBg.onclick = closeSpecialChatModal;
+      document.getElementById('special-chat-ok-btn').onclick = function() {
+        const code = document.getElementById('special-chat-code-input').value.trim();
+        if (!code) {
+          alert('Lütfen bir kod girin!');
+          return;
+        }
+        alert('Girilen kod: ' + code);
+        closeSpecialChatModal();
+      };
     };
     function closeSpecialChatModal() {
       specialChatModalBg.style.display = 'none';
