@@ -382,20 +382,23 @@
   </style>
 </head>
 <body>
-  <div style="width:100vw;text-align:center;padding:1.2em 0 0.2em 0;display:flex;align-items:center;justify-content:center;gap:1.2em;">
-    <span style="font-size:2.2rem;font-weight:bold;color:#ff9800;letter-spacing:2px;text-shadow:0 2px 8px #7c3aed33;">Top-Secret</span>
-    <button id="theme-toggle-btn" title="Tema Değiştir" style="margin-left:1em;font-size:1.3em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#ff9800;cursor:pointer;">🌙</button>
-    <button id="lang-toggle-btn" title="Dili Değiştir" style="margin-left:0.5em;font-size:1.1em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#43ea7b;cursor:pointer;">EN</button>
+  <!-- Sağ üstte sabit tema ve dil butonları -->
+  <div style="position:fixed;top:24px;right:32px;z-index:2000;display:flex;flex-direction:column;gap:0.7em;align-items:flex-end;">
+    <button id="theme-toggle-btn" title="Tema Değiştir" style="font-size:1.3em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#ff9800;cursor:pointer;box-shadow:0 2px 8px #7c3aed33;">🌙</button>
+    <button id="lang-toggle-btn" title="Dili Değiştir" style="font-size:1.1em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#43ea7b;cursor:pointer;box-shadow:0 2px 8px #7c3aed33;">EN</button>
   </div>
-  <div id="welcome-msg" style="text-align:center;font-size:1.1em;color:#43ea7b;font-weight:bold;margin-bottom:0.5em;display:none;"></div>
-  <div id="toast-container" style="position:fixed;top:24px;right:24px;z-index:5000;display:flex;flex-direction:column;gap:0.7em;"></div>
-  <div id="scroll-top-btn" title="Yukarı Çık" style="display:none;position:fixed;right:32px;bottom:180px;z-index:1002;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;color:#fff;"><span>↑</span></div>
-  <div id="about-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:4000;"></div>
-  <div id="about-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4001;background:#232136;padding:2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;color:#fff;"></div>
-  <div id="shortcuts-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:4100;"></div>
-  <div id="shortcuts-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4101;background:#232136;padding:2em 2.5em;border-radius:18px;box-shadow:0 8px 32px #7c3aed33;min-width:320px;max-width:98vw;text-align:center;color:#fff;"></div>
-  <div id="loading-spinner" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:6000;background:rgba(24,26,27,0.45);align-items:center;justify-content:center;"><div style="border:6px solid #7c3aed;border-top:6px solid #ff9800;border-radius:50%;width:60px;height:60px;animation:spin 1s linear infinite;"></div></div>
-  <style>@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}</style>
+  <!-- Logo ve hoşgeldin mesajı -->
+  <div style="width:100vw;text-align:center;padding:2.2em 0 0.7em 0;">
+    <span style="font-size:2.5rem;font-weight:bold;color:#ff9800;letter-spacing:2px;text-shadow:0 2px 8px #7c3aed33;">Top-Secret</span>
+    <div id="welcome-msg" style="margin-top:0.7em;text-align:center;font-size:1.2em;color:#43ea7b;font-weight:bold;display:none;"></div>
+  </div>
+  <div id="toast-container" style="position:fixed;top:24px;right:120px;z-index:5000;display:flex;flex-direction:column;gap:0.7em;"></div>
+  <!-- Sağ alt köşede dikey butonlar -->
+  <div style="position:fixed;right:32px;bottom:32px;z-index:1001;display:flex;flex-direction:column;gap:1.1em;align-items:flex-end;">
+    <div id="scroll-top-btn" title="Yukarı Çık" style="display:none;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;color:#fff;"><span>↑</span></div>
+    <button id="special-chat-btn" title="Özel Chat" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#ff9800 60%,#7c3aed 100%);box-shadow:0 4px 18px #ff980044;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;margin:0;"><span>📡</span></button>
+    <button id="show-user-info-btn" title="Hesap Bilgileri" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;margin:0;"><span>👤</span></button>
+  </div>
   <div class="auth-card" id="auth-container">
     <div class="auth-title" id="form-title">Top-Secret</div>
     <form class="auth-form" id="login-form" autocomplete="off">
@@ -439,10 +442,6 @@
     <!-- Özel Chat Modalı -->
     <div id="special-chat-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:2000;"></div>
     <div id="special-chat-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;"></div>
-    <!-- Sağ alt bilgi butonu -->
-    <button id="show-user-info-btn" title="Hesap Bilgileri" style="position:fixed;right:32px;bottom:32px;z-index:1001;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;">
-      <span style="font-size:2.1rem;color:#fff;">👤</span>
-    </button>
     <!-- Modal arka planı ve bilgi paneli -->
     <div id="user-info-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:1000;"></div>
     <div id="user-info-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;"></div>
