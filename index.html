@@ -3,20 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Top-Secret</title>
-  <meta name="description" content="Top-Secret: Güvenli ve modern sohbet, özel chat ve oyun platformu.">
-  <meta property="og:title" content="Top-Secret" />
-  <meta property="og:description" content="Güvenli ve modern sohbet, özel chat ve oyun platformu." />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="favicon.png" />
-  <meta property="og:url" content="" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Top-Secret" />
-  <meta name="twitter:description" content="Güvenli ve modern sohbet, özel chat ve oyun platformu." />
-  <meta name="twitter:image" content="favicon.png" />
-  <meta name="theme-color" content="#232136" />
   <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
-  <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -382,23 +369,6 @@
   </style>
 </head>
 <body>
-  <!-- Sağ üstte sabit tema ve dil butonları -->
-  <div style="position:fixed;top:24px;right:32px;z-index:2000;display:flex;flex-direction:column;gap:0.7em;align-items:flex-end;">
-    <button id="theme-toggle-btn" title="Tema Değiştir" style="font-size:1.3em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#ff9800;cursor:pointer;box-shadow:0 2px 8px #7c3aed33;">🌙</button>
-    <button id="lang-toggle-btn" title="Dili Değiştir" style="font-size:1.1em;padding:0.3em 0.7em;border-radius:8px;border:none;background:#232136;color:#43ea7b;cursor:pointer;box-shadow:0 2px 8px #7c3aed33;">EN</button>
-  </div>
-  <!-- Logo ve hoşgeldin mesajı -->
-  <div style="width:100vw;text-align:center;padding:2.2em 0 0.7em 0;">
-    <span style="font-size:2.5rem;font-weight:bold;color:#ff9800;letter-spacing:2px;text-shadow:0 2px 8px #7c3aed33;">Top-Secret</span>
-    <div id="welcome-msg" style="margin-top:0.7em;text-align:center;font-size:1.2em;color:#43ea7b;font-weight:bold;display:none;"></div>
-  </div>
-  <div id="toast-container" style="position:fixed;top:24px;right:120px;z-index:5000;display:flex;flex-direction:column;gap:0.7em;"></div>
-  <!-- Sağ alt köşede dikey butonlar -->
-  <div style="position:fixed;right:32px;bottom:32px;z-index:1001;display:flex;flex-direction:column;gap:1.1em;align-items:flex-end;">
-    <div id="scroll-top-btn" title="Yukarı Çık" style="display:none;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;color:#fff;"><span>↑</span></div>
-    <button id="special-chat-btn" title="Özel Chat" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#ff9800 60%,#7c3aed 100%);box-shadow:0 4px 18px #ff980044;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;margin:0;"><span>📡</span></button>
-    <button id="show-user-info-btn" title="Hesap Bilgileri" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;font-size:2em;margin:0;"><span>👤</span></button>
-  </div>
   <div class="auth-card" id="auth-container">
     <div class="auth-title" id="form-title">Top-Secret</div>
     <form class="auth-form" id="login-form" autocomplete="off">
@@ -442,6 +412,10 @@
     <!-- Özel Chat Modalı -->
     <div id="special-chat-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:2000;"></div>
     <div id="special-chat-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;"></div>
+    <!-- Sağ alt bilgi butonu -->
+    <button id="show-user-info-btn" title="Hesap Bilgileri" style="position:fixed;right:32px;bottom:32px;z-index:1001;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed 60%,#ff9800 100%);box-shadow:0 4px 18px #7c3aed44;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;">
+      <span style="font-size:2.1rem;color:#fff;">👤</span>
+    </button>
     <!-- Modal arka planı ve bilgi paneli -->
     <div id="user-info-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:1000;"></div>
     <div id="user-info-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;"></div>
@@ -1342,91 +1316,6 @@
         privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
       });
     }
-  </script>
-  <!-- Sayfa sonu footer -->
-  <footer style="width:100vw;text-align:center;padding:1.2em 0 1.2em 0;background:#232136;color:#fff;font-size:1em;letter-spacing:1px;opacity:0.85;margin-top:2em;">
-    © 2024 Top-Secret | Güvenli Sohbet ve Oyun Platformu
-    · <a href="#" id="about-link" style="color:#ff9800;text-decoration:underline;">Hakkında</a>
-    · <a href="#" id="terms-link" style="color:#ff9800;text-decoration:underline;">Kullanım Koşulları</a>
-    · <a href="#" id="shortcuts-link" style="color:#43ea7b;text-decoration:underline;">Kısayollar</a>
-  </footer>
-  <script>
-    // Tema değiştirme
-    const themeBtn = document.getElementById('theme-toggle-btn');
-    let darkMode = true;
-    themeBtn.onclick = function() {
-      darkMode = !darkMode;
-      document.body.style.background = darkMode ? '#181a1b' : '#f5f5f7';
-      document.body.style.color = darkMode ? '#f5f5f7' : '#232136';
-      themeBtn.textContent = darkMode ? '🌙' : '☀️';
-      showToast(darkMode ? 'Karanlık mod aktif' : 'Açık mod aktif');
-    };
-    // Dil değiştirme
-    const langBtn = document.getElementById('lang-toggle-btn');
-    let lang = 'TR';
-    langBtn.onclick = function() {
-      lang = lang === 'TR' ? 'EN' : 'TR';
-      langBtn.textContent = lang === 'TR' ? 'EN' : 'TR';
-      showToast(lang === 'TR' ? 'Dil: Türkçe' : 'Language: English');
-      // Burada arayüz metinlerini değiştirebilirsin (örnek olarak toast gösteriliyor)
-    };
-    // Yukarı çık butonu
-    const scrollBtn = document.getElementById('scroll-top-btn');
-    window.onscroll = function() {
-      scrollBtn.style.display = window.scrollY > 200 ? 'flex' : 'none';
-    };
-    scrollBtn.onclick = function() {
-      window.scrollTo({top:0,behavior:'smooth'});
-    };
-    // Hakkında ve kullanım koşulları modalı
-    const aboutLink = document.getElementById('about-link');
-    const termsLink = document.getElementById('terms-link');
-    const aboutModalBg = document.getElementById('about-modal-bg');
-    const aboutModal = document.getElementById('about-modal');
-    aboutLink.onclick = function(e){e.preventDefault();aboutModalBg.style.display='block';aboutModal.style.display='block';aboutModal.innerHTML='<h2>Hakkında</h2><p>Top-Secret, güvenli ve modern bir sohbet, özel chat ve oyun platformudur. Tüm verileriniz gizli tutulur.</p><button onclick="closeAboutModal()" style="margin-top:1em;background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;">Kapat</button>';};
-    termsLink.onclick = function(e){e.preventDefault();aboutModalBg.style.display='block';aboutModal.style.display='block';aboutModal.innerHTML='<h2>Kullanım Koşulları</h2><p>Bu siteyi kullanarak gizlilik ve güvenlik kurallarını kabul etmiş olursunuz. Kötüye kullanım tespit edilirse erişim engellenebilir.</p><button onclick="closeAboutModal()" style="margin-top:1em;background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;">Kapat</button>';};
-    aboutModalBg.onclick = closeAboutModal;
-    function closeAboutModal(){aboutModalBg.style.display='none';aboutModal.style.display='none';}
-    // Kısayollar modalı
-    const shortcutsLink = document.getElementById('shortcuts-link');
-    const shortcutsModalBg = document.getElementById('shortcuts-modal-bg');
-    const shortcutsModal = document.getElementById('shortcuts-modal');
-    shortcutsLink.onclick = function(e){e.preventDefault();shortcutsModalBg.style.display='block';shortcutsModal.style.display='block';shortcutsModal.innerHTML='<h2>Klavye Kısayolları</h2><ul style="text-align:left;max-width:320px;margin:0 auto 1em auto;"><li><b>Enter</b>: Mesaj gönder</li><li><b>ESC</b>: Modal kapat</li><li><b>Ctrl+K</b>: Arama (varsa)</li></ul><button onclick="closeShortcutsModal()" style="margin-top:1em;background:#23272b;color:#ff9800;font-weight:bold;border:none;border-radius:10px;padding:0.6em 1.2em;cursor:pointer;">Kapat</button>';};
-    shortcutsModalBg.onclick = closeShortcutsModal;
-    function closeShortcutsModal(){shortcutsModalBg.style.display='none';shortcutsModal.style.display='none';}
-    // Hoşgeldin mesajı (giriş yapan kullanıcıya)
-    function showWelcomeMsg(){
-      const user = firebase.auth().currentUser;
-      const msgDiv = document.getElementById('welcome-msg');
-      if(user && user.email){
-        msgDiv.textContent = 'Hoşgeldin, ' + (user.email.split('@')[0]) + '!';
-        msgDiv.style.display = 'block';
-      }else{
-        msgDiv.style.display = 'none';
-      }
-    }
-    firebase.auth().onAuthStateChanged(showWelcomeMsg);
-    // Toast bildirim sistemi
-    function showToast(msg){
-      const toastC = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.textContent = msg;
-      toast.style = 'background:#232136;color:#ff9800;padding:0.8em 1.4em;border-radius:10px;box-shadow:0 2px 8px #7c3aed33;font-weight:bold;font-size:1.08em;opacity:0.97;';
-      toastC.appendChild(toast);
-      setTimeout(()=>{toast.style.opacity='0.2';},1800);
-      setTimeout(()=>{toast.remove();},2400);
-    }
-    // Loading spinner göster/gizle fonksiyonu
-    function showLoadingSpinner(show){
-      document.getElementById('loading-spinner').style.display = show ? 'flex' : 'none';
-    }
-    // ESC ile modal kapama
-    document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'){
-        closeAboutModal();
-        closeShortcutsModal();
-      }
-    });
   </script>
 </body>
 </html> 
