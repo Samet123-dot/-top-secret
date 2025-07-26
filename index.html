@@ -268,7 +268,7 @@
   <!-- Sağ alt köşede dikey butonlar -->
   <div style="position:fixed;right:32px;bottom:32px;z-index:1001;display:flex;flex-direction:column;gap:1.1em;align-items:flex-end;">
     <div id="scroll-top-btn" title="Yukarı Çık" class="modern-fab" style="display:none;"><span>↑</span></div>
-    <button id="special-chat-btn" title="Özel Chat" class="modern-fab"><span>📡</span></button>
+
     <button id="show-user-info-btn" title="Hesap Bilgileri" class="modern-fab"><span>👤</span></button>
   </div>
   <div class="auth-card" id="auth-container">
@@ -307,10 +307,7 @@
       <!-- Bilgi paneli ana ekranda gösterilmeyecek, modal olarak açılacak -->
       <div id="user-info-panel" style="display:none;"></div>
     </div>
-    <!-- Sağ alt özel chat butonu -->
-    <button id="special-chat-btn" title="Özel Chat" style="position:fixed;right:32px;bottom:100px;z-index:1001;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#ff9800 60%,#7c3aed 100%);box-shadow:0 4px 18px #ff980044;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.18s;outline:none;margin-bottom:12px;">
-      <span style="font-size:2.1rem;color:#fff;">📡</span>
-    </button>
+
     <!-- Özel Chat Modalı -->
     <div id="special-chat-modal-bg" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(24,26,27,0.65);z-index:2000;"></div>
     <div id="special-chat-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2001;"></div>
