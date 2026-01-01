@@ -788,4 +788,662 @@
     };
 
     // Login
+    document.getElementById('login-form').onsubmit = function(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+      
+      errorDiv.textContent = '';
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          errorDiv.className = 'message-box success';
+          errorDiv.textContent = 'Giriş başarılı!';
+          setTimeout(() => {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('chat-container').classList.remove('hidden');
+            document.getElementById('fab-container').classList.remove('hidden');
+          }, 500);
+        })
+        .catch(err => {
+          errorDiv.className = 'message-box';
+          errorDiv.textContent = 'Giriş başarısız: ' + err.message;
+        });
+    };
+
+    // Signup with Email Verification
+    document.getElementById('signup-form').onsubmit = function(e) {
+      e.preventDefault();
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const errorDiv = document.getElementById('signup-error');
+      const successDiv = document.getElementById('signup-success');
+      
+      errorDiv.textContent = '';
+      successDiv.textContent = '';
+      
+      const code = Math.floor(100000 + Math.random() * 900000);
+      
+      emailjs.send("service_a1d2neu", "template_3r4mr8b", {
+        to_email: email,
+        code: code
+      })
+      .then(() => showVerificationModal(code, email, password))
+      .catch(err => {
+        errorDiv.textContent = "Kod gönderilemedi: " + err.text;
+      });
+    };
+
+    function showVerificationModal(expectedCode, email, password) {
+      let timer = 30;
+      const content = `
+        <div class="verify-modal">
+          <p>Mail adresinize gönderilen <strong style="color:#ff9800;">6 haneli kodu</strong> girin:</p>
+          <input id="verify-code-input" type="text" maxlength="6" pattern="[0-9]{6}" autofocus />
+          <div class="verify-timer" id="verify-timer">30</div>
+          <div class="message-box" id="verify-error"></div>
+        </div>
+      `;
+      
+      showModal('E-posta Doğrulama', content, [
+        { text: 'Doğrula', action: 'verifyCode()' },
+        { text: 'İptal', action: 'closeModal()', style: 'background: #23272b; color: #ff9800;' }
+      ]);
+      
+      const interval = setInterval(() => {
+        timer--;
+        const timerEl = document.getElementById('verify-timer');
+        if (timerEl) timerEl.textContent = timer;
+        
+        if (timer <= 0) {
+          clearInterval(interval);
+          const errorEl = document.getElementById('verify-error');
+          if (errorEl) {
+            errorEl.textContent = 'Süre doldu. Lütfen tekrar kayıt olun.';
+            document.querySelector('#modal button').disabled = true;
+          }
+        }
+      }, 1000);
+      
+      window.verifyCode = function() {
+        const input = document.getElementById('verify-code-input');
+        const errorEl = document.getElementById('verify-error');
+        
+        if (input.value.trim() === expectedCode.toString()) {
+          clearInterval(interval);
+          closeModal();
+          
+          auth.createUserWithEmailAndPassword(email, password)
+            .then(() => {
+              document.getElementById('signup-success').textContent = 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.';
+              setTimeout(() => document.getElementById('show-login').click(), 1500);
+            })
+            .catch(err => {
+              document.getElementById('signup-error').textContent = err.message;
+            });
+        } else {
+          errorEl.textContent = 'Kod yanlış!';
+        }
+      };
+    }
+
+    // Auth State Observer
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('auth-container').classList.add('hidden');
+        document.getElementById('chat-container').classList.remove('hidden');
+        document.getElementById('fab-container').classList.remove('hidden');
+        
+        const welcomeMsg = document.getElementById('welcome-msg');
+        welcomeMsg.textContent = `Hoşgeldin, ${user.email.split('@')[0]}!`;
+        welcomeMsg.classList.remove('hidden');
+        
+        setOnlineUser();
+      } else {
+        document.getElementById('chat-container').classList.add('hidden');
+        document.getElementById('fab-container').classList.add('hidden');
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('welcome-msg').classList.add('hidden');
+        document.getElementById('xox-lobby').classList.add('hidden');
+      }
+    });
+
+    // Chat System
+    let username = localStorage.getItem('chat-username');
+    let chatCooldown = false;
+    let messageCount = 0;
+
+    function ensureUsername() {
+      if (!username) {
+        username = prompt('Kullanıcı adınızı girin:');
+        if (username && username.trim()) {
+          localStorage.setItem('chat-username', username.trim());
+        } else {
+          ensureUsername();
+        }
+      }
+    }
+
+    document.getElementById('chat-form').onsubmit = function(e) {
+      e.preventDefault();
+      if (chatCooldown) return;
+      
+      ensureUsername();
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      
+      if (!text) return;
+      
+      if (text === '/clear') {
+        db.ref('messages').remove().then(() => {
+          document.getElementById('chat-messages').innerHTML = '';
+          showToast('Sohbet temizlendi!');
+        });
+      } else {
+        db.ref('messages').push({
+          user: username,
+          text: text,
+          time: Date.now()
+        });
+      }
+      
+      input.value = '';
+      messageCount++;
+      
+      if (messageCount >= 3) {
+        chatCooldown = true;
+        input.disabled = true;
+        this.querySelector('button[type="submit"]').disabled = true;
+        
+        let remaining = 2;
+        const warningDiv = document.getElementById('cooldown-warning');
+        warningDiv.textContent = `${remaining} saniye bekleyin...`;
+        
+        const cooldownInterval = setInterval(() => {
+          remaining--;
+          if (remaining > 0) {
+            warningDiv.textContent = `${remaining} saniye bekleyin...`;
+          } else {
+            clearInterval(cooldownInterval);
+            chatCooldown = false;
+            input.disabled = false;
+            this.querySelector('button[type="submit"]').disabled = false;
+            warningDiv.textContent = '';
+            messageCount = 0;
+          }
+        }, 1000);
+      }
+    };
+
+    // Listen to messages
+    db.ref('messages').limitToLast(50).on('child_added', snapshot => {
+      const msg = snapshot.val();
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-message';
+      msgDiv.innerHTML = `<span class="chat-user">${msg.user}:</span> <span class="chat-text">${msg.text}</span>`;
+      
+      const container = document.getElementById('chat-messages');
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    });
+
+    // Online Users System
+    let onlineUserKey = null;
+
+    function setOnlineUser() {
+      ensureUsername();
+      
+      db.ref('onlineUsers').orderByChild('username').equalTo(username).once('value', snapshot => {
+        snapshot.forEach(child => child.ref.remove());
+        
+        const userRef = db.ref('onlineUsers').push({
+          username: username,
+          time: Date.now()
+        });
+        
+        onlineUserKey = userRef.key;
+        userRef.onDisconnect().remove();
+      });
+    }
+
+    function removeOnlineUser() {
+      if (onlineUserKey) {
+        db.ref('onlineUsers/' + onlineUserKey).remove();
+        onlineUserKey = null;
+      }
+    }
+
+    db.ref('onlineUsers').on('value', snapshot => {
+      const users = snapshot.val() || {};
+      const container = document.getElementById('online-users-list');
+      container.innerHTML = '';
+      
+      const userNames = Object.values(users).map(u => u.username);
+      
+      if (userNames.length === 0) {
+        container.innerHTML = '<div style="color:#ff9800;text-align:center;">Şu anda kimse online değil</div>';
+      } else {
+        userNames.forEach(name => {
+          const div = document.createElement('div');
+          div.className = 'online-user';
+          div.innerHTML = `<div class="online-indicator"></div><span style="font-weight:600;">${name}</span>`;
+          container.appendChild(div);
+        });
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-btn').onclick = function() {
+      removeOnlineUser();
+      localStorage.removeItem('chat-username');
+      auth.signOut();
+    };
+
+    // XOX Game System
+    document.getElementById('xox-btn').onclick = function() {
+      document.getElementById('chat-container').classList.add('hidden');
+      document.getElementById('xox-lobby').classList.remove('hidden');
+      loadRooms();
+    };
+
+    document.getElementById('back-to-chat-btn').onclick = function() {
+      document.getElementById('xox-lobby').classList.add('hidden');
+      document.getElementById('chat-container').classList.remove('hidden');
+    };
+
+    document.getElementById('create-room-form').onsubmit = function(e) {
+      e.preventDefault();
+      const roomName = document.getElementById('room-name-input').value.trim();
+      const user = auth.currentUser;
+      
+      if (!roomName || !user) return;
+      
+      const roomRef = db.ref('xoxRooms').push();
+      roomRef.set({
+        name: roomName,
+        owner: user.uid,
+        ownerEmail: user.email,
+        created: Date.now(),
+        players: {
+          [user.uid]: {
+            email: user.email,
+            joined: Date.now(),
+            isOwner: true
+          }
+        },
+        started: false
+      }).then(() => {
+        showToast('Oda oluşturuldu!');
+        document.getElementById('room-name-input').value = '';
+        loadRooms();
+      });
+    };
+
+    document.getElementById('refresh-rooms-btn').onclick = loadRooms;
+
+    function loadRooms() {
+      const container = document.getElementById('room-list');
+      container.innerHTML = '<div style="color:#ff9800;text-align:center;">Yükleniyor...</div>';
+      
+      db.ref('xoxRooms').orderByChild('started').equalTo(false).once('value', snapshot => {
+        const rooms = snapshot.val() || {};
+        const keys = Object.keys(rooms);
+        
+        if (keys.length === 0) {
+          container.innerHTML = '<div style="color:#ff9800;text-align:center;">Açık oda yok</div>';
+        } else {
+          container.innerHTML = '';
+          keys.forEach(key => {
+            const room = rooms[key];
+            const div = document.createElement('div');
+            div.className = 'room-item';
+            div.innerHTML = `
+              <span class="room-name">${room.name}</span>
+              <button class="btn" style="padding:0.5rem 1rem;font-size:0.9rem;" onclick="joinRoom('${key}')">Katıl</button>
+            `;
+            container.appendChild(div);
+          });
+        }
+      });
+    }
+
+    window.joinRoom = function(roomId) {
+      const user = auth.currentUser;
+      if (!user) return showToast('Giriş yapmalısınız!');
+      
+      const roomRef = db.ref('xoxRooms/' + roomId + '/players/' + user.uid);
+      roomRef.set({
+        email: user.email,
+        joined: Date.now(),
+        isOwner: false
+      }).then(() => {
+        showToast('Odaya katıldınız!');
+        showGameLobby(roomId);
+      });
+    };
+
+    function showGameLobby(roomId) {
+      const roomRef = db.ref('xoxRooms/' + roomId);
+      
+      roomRef.on('value', snapshot => {
+        const room = snapshot.val();
+        if (!room) {
+          closeModal();
+          showToast('Oda bulunamadı');
+          return;
+        }
+        
+        const players = room.players || {};
+        const playerCount = Object.keys(players).length;
+        
+        let content = '<div style="text-align:center;"><h3 style="color:#ff9800;margin-bottom:1rem;">Oyuncular:</h3>';
+        Object.values(players).forEach((p, i) => {
+          content += `<div style="margin:0.5rem 0;color:#fff;">${i+1}. ${p.email}</div>`;
+        });
+        content += '</div>';
+        
+        const buttons = [
+          { text: 'Odadan Çık', action: `leaveRoom('${roomId}')`, style: 'background:#23272b;color:#ff9800;' }
+        ];
+        
+        const user = auth.currentUser;
+        if (user && room.owner === user.uid && playerCount >= 2 && !room.started) {
+          buttons.unshift({ text: 'Oyunu Başlat', action: `startGame('${roomId}')` });
+        }
+        
+        showModal('Oda Lobisi: ' + room.name, content, buttons);
+        
+        if (room.started && room.game) {
+          showGame(roomId, room);
+        }
+      });
+    }
+
+    window.leaveRoom = function(roomId) {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      db.ref('xoxRooms/' + roomId + '/players/' + user.uid).remove().then(() => {
+        db.ref('xoxRooms/' + roomId + '/players').once('value', snap => {
+          if (!snap.exists()) {
+            db.ref('xoxRooms/' + roomId).remove();
+          }
+        });
+        closeModal();
+        loadRooms();
+      });
+    };
+
+    window.startGame = function(roomId) {
+      db.ref('xoxRooms/' + roomId).once('value', snapshot => {
+        const room = snapshot.val();
+        if (!room) return;
+        
+        const playerIds = Object.keys(room.players || {});
+        if (playerIds.length < 2) return showToast('En az 2 oyuncu gerekli!');
+        
+        db.ref('xoxRooms/' + roomId).update({
+          started: true,
+          game: {
+            board: Array(9).fill(''),
+            turn: playerIds[0],
+            winner: null,
+            gameOver: false
+          }
+        });
+      });
+    };
+
+    function showGame(roomId, room) {
+      const user = auth.currentUser;
+      const game = room.game;
+      const playerIds = Object.keys(room.players);
+      const isPlayer1 = user.uid === playerIds[0];
+      const mySymbol = isPlayer1 ? 'X' : 'O';
+      const isMyTurn = game.turn === user.uid;
+      
+      let content = `
+        <div style="text-align:center;">
+          <h3 style="color:#ff9800;margin-bottom:1rem;">X O X Oyunu</h3>
+          <div style="margin-bottom:1rem;font-size:1.1rem;">
+            Sıra: <span style="color:${isMyTurn ? '#43ea7b' : '#ff9800'};font-weight:700;">
+              ${isMyTurn ? 'Sen (' + mySymbol + ')' : 'Rakip'}
+            </span>
+          </div>
+          <div class="game-board">
+      `;
+      
+      game.board.forEach((cell, idx) => {
+        const cellClass = cell === 'X' ? 'x' : cell === 'O' ? 'o' : '';
+        const disabled = cell || game.gameOver || !isMyTurn;
+        content += `<button class="game-cell ${cellClass}" ${disabled ? 'disabled' : ''} onclick="makeMove('${roomId}', ${idx})">${cell}</button>`;
+      });
+      
+      content += '</div>';
+      
+      if (game.winner) {
+        const wonGame = (game.winner === 'X' && isPlayer1) || (game.winner === 'O' && !isPlayer1);
+        content += `<div style="margin-top:1rem;font-size:1.2rem;font-weight:700;color:${wonGame ? '#43ea7b' : '#ff9800'};">
+          ${wonGame ? 'Kazandın!' : 'Kaybettin!'}
+        </div>`;
+      } else if (game.board.every(c => c)) {
+        content += '<div style="margin-top:1rem;font-size:1.2rem;font-weight:700;color:#fff;">Berabere!</div>';
+      }
+      
+      content += '</div>';
+      
+      showModal('Oyun Devam Ediyor', content, [
+        { text: 'Odadan Çık', action: `leaveRoom('${roomId}')`, style: 'background:#23272b;color:#ff9800;' }
+      ]);
+    }
+
+    window.makeMove = function(roomId, cellIdx) {
+      const user = auth.currentUser;
+      
+      db.ref('xoxRooms/' + roomId).transaction(room => {
+        if (!room || !room.game || room.game.turn !== user.uid) return room;
+        if (room.game.board[cellIdx] || room.game.gameOver) return room;
+        
+        const playerIds = Object.keys(room.players);
+        const isPlayer1 = user.uid === playerIds[0];
+        const symbol = isPlayer1 ? 'X' : 'O';
+        
+        room.game.board[cellIdx] = symbol;
+        
+        const winner = checkWinner(room.game.board);
+        if (winner) {
+          room.game.winner = winner;
+          room.game.gameOver = true;
+        } else if (room.game.board.every(c => c)) {
+          room.game.gameOver = true;
+        } else {
+          room.game.turn = playerIds[isPlayer1 ? 1 : 0];
+        }
+        
+        return room;
+      });
+    };
+
+    function checkWinner(board) {
+      const lines = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      
+      for (const [a, b, c] of lines) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return board[a];
+        }
+      }
+      return null;
+    }
+
+    // User Info Modal
+    document.getElementById('user-info-btn').onclick = function() {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      const content = `
+        <div class="user-info-panel">
+          <div class="user-info-row">
+            <span class="user-info-label">📧 E-posta:</span>
+            <span>${user.email}</span>
+          </div>
+          <div class="user-info-row">
+            <span class="user-info-label">🆔 Kullanıcı ID:</span>
+            <span style="font-size:0.85rem;">${user.uid}</span>
+          </div>
+          <div class="user-info-row">
+            <span class="user-info-label">📅 Kayıt Tarihi:</span>
+            <span>${new Date(user.metadata.creationTime).toLocaleDateString('tr-TR')}</span>
+          </div>
+          <div class="user-info-row">
+            <span class="user-info-label">⏰ Son Giriş:</span>
+            <span>${new Date(user.metadata.lastSignInTime).toLocaleDateString('tr-TR')}</span>
+          </div>
+        </div>
+      `;
+      
+      showModal('Hesap Bilgileri', content, [
+        { text: 'Kapat', action: 'closeModal()', style: 'background:#23272b;color:#ff9800;' }
+      ]);
+    };
+
+    // Private Chat
+    document.getElementById('special-chat-btn').onclick = function() {
+      const content = `
+        <div style="text-align:center;">
+          <p style="margin-bottom:1rem;">Özel chat kodunu girin:</p>
+          <input id="private-code-input" type="text" maxlength="12" placeholder="Kod..." 
+            style="width:80%;padding:0.8rem;border-radius:10px;border:2px solid #7c3aed;background:#181a1b;color:#fff;font-size:1.1rem;text-align:center;" />
+        </div>
+      `;
+      
+      showModal('Özel Chat', content, [
+        { text: 'Aç', action: 'openPrivateChat()' },
+        { text: 'İptal', action: 'closeModal()', style: 'background:#23272b;color:#ff9800;' }
+      ]);
+      
+      setTimeout(() => document.getElementById('private-code-input')?.focus(), 100);
+    };
+
+    window.openPrivateChat = function() {
+      const input = document.getElementById('private-code-input');
+      const code = input?.value.trim();
+      
+      if (!code) return showToast('Lütfen bir kod girin!');
+      
+      closeModal();
+      
+      const content = `
+        <div style="min-width:400px;max-width:90vw;">
+          <div style="text-align:center;margin-bottom:1rem;">
+            <span style="color:#ff9800;font-weight:700;">Kod: ${code}</span>
+          </div>
+          <div id="private-messages" class="chat-messages" style="height:300px;"></div>
+          <form id="private-chat-form" style="display:flex;gap:0.5rem;margin-top:1rem;">
+            <input id="private-input" type="text" maxlength="300" placeholder="Mesaj..." required 
+              style="flex:1;padding:0.8rem;border-radius:10px;border:2px solid #7c3aed;background:#181a1b;color:#fff;" />
+            <button type="submit" class="btn">Gönder</button>
+          </form>
+        </div>
+      `;
+      
+      showModal('Özel Chat', content, [
+        { text: 'Kapat', action: 'closePrivateChat()', style: 'background:#23272b;color:#ff9800;' }
+      ]);
+      
+      ensureUsername();
+      
+      const form = document.getElementById('private-chat-form');
+      form.onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById('private-input');
+        const text = input.value.trim();
+        
+        if (!text) return;
+        
+        db.ref('privateChats/' + code).push({
+          user: username,
+          text: text,
+          time: Date.now()
+        });
+        
+        input.value = '';
+      };
+      
+      window.privateChatListener = db.ref('privateChats/' + code).limitToLast(50);
+      window.privateChatListener.on('child_added', snapshot => {
+        const msg = snapshot.val();
+        const container = document.getElementById('private-messages');
+        if (!container) return;
+        
+        const div = document.createElement('div');
+        div.className = 'chat-message';
+        div.innerHTML = `<span class="chat-user">${msg.user}:</span> <span class="chat-text">${msg.text}</span>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+      });
+    };
+
+    window.closePrivateChat = function() {
+      if (window.privateChatListener) {
+        window.privateChatListener.off();
+        window.privateChatListener = null;
+      }
+      closeModal();
+    };
+
+    // Scroll to Top
+    document.getElementById('scroll-top-btn').onclick = function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.onscroll = function() {
+      const btn = document.getElementById('scroll-top-btn');
+      btn.style.display = window.scrollY > 300 ? 'flex' : 'none';
+    };
+
+    // Footer Links
+    document.getElementById('about-link').onclick = function(e) {
+      e.preventDefault();
+      showModal('Hakkında', `
+        <p>Top-Secret, güvenli ve modern bir sohbet, özel chat ve oyun platformudur.</p>
+        <p>Tüm verileriniz Firebase üzerinde güvenli şekilde saklanır.</p>
+      `, [{ text: 'Kapat', action: 'closeModal()' }]);
+    };
+
+    document.getElementById('terms-link').onclick = function(e) {
+      e.preventDefault();
+      showModal('Kullanım Koşulları', `
+        <p>Bu platformu kullanarak gizlilik ve güvenlik kurallarını kabul etmiş olursunuz.</p>
+        <p>Kötüye kullanım tespit edilirse erişim engellenebilir.</p>
+      `, [{ text: 'Kapat', action: 'closeModal()' }]);
+    };
+
+    document.getElementById('shortcuts-link').onclick = function(e) {
+      e.preventDefault();
+      showModal('Klavye Kısayolları', `
+        <ul style="text-align:left;line-height:2;">
+          <li><strong>Enter:</strong> Mesaj gönder</li>
+          <li><strong>ESC:</strong> Modal kapat</li>
+          <li><strong>/clear:</strong> Sohbeti temizle</li>
+        </ul>
+      `, [{ text: 'Kapat', action: 'closeModal()' }]);
+    };
+
+    // ESC to close modal
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Click outside to close modal
+    document.getElementById('modal-bg').onclick = closeModal;
+
+    // Cleanup on unload
+    window.addEventListener('beforeunload', removeOnlineUser);
+  </script>
+</body>
+</html>
     
